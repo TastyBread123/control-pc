@@ -1,0 +1,1 @@
+pyinstaller syst.py --noconsole --onefile
