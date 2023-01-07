@@ -35,7 +35,7 @@ conn.request("GET", "/ip")
 
 #Для функций
 name = ""
-put = ""
+route = ""
 
 total_mem, used_mem, free_mem = shutil.disk_usage('.')
 gb = 10 ** 9
@@ -83,6 +83,27 @@ def start(message):
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
         mainmenu(message)
+        return
+
+
+
+def samp_connect(message):
+    ip = message.text.strip()
+
+    if ip == '/start':
+        return start()
+
+    try:
+        samp_route = config["Main"]["gtasa_route"]
+        os.system(f"start {samp_route}\samp.exe {ip}")
+        bot.send_message(message.chat.id, f'Подключаемся к серверу с IP *{ip}*...', parse_mode = "Markdown")
+        console_menu(message)
+        return
+    
+    except:
+        bot.send_message(message.chat.id, f'Произошла ошибка!! Проверьте ваш settings.ini', parse_mode = "Markdown")
+        console_menu(message)
+        return
 
 
 
@@ -276,10 +297,10 @@ def izmena_2(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        global put
+        global route
 
-        put = message.text.strip()
-        if str(put) == '/start':
+        route = message.text.strip()
+        if str(route) == '/start':
             start(message)
 
         else:   
@@ -291,16 +312,15 @@ def izmena_3(message):
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
         try:
-            global put
             new_sod = message.text.strip()
             if str(new_sod) == '/start':
                 start(message)
 
             else:
-                f = open(str(put),'w',encoding = 'utf-8')
+                f = open(str(route),'w',encoding = 'utf-8')
                 f.write(str(new_sod))
                 f.close
-                bot.send_message(message.chat.id, f'☑️ Файл *{put}* был успешно изменен!', parse_mode="Markdown")
+                bot.send_message(message.chat.id, f'☑️ Файл *{route}* был успешно изменен!', parse_mode="Markdown")
                 mainmenu(message)
 
         except:
@@ -322,17 +342,17 @@ def check_ochistka(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        put = message.text.strip()
+        route = message.text.strip()
         
-        if str(put) == '/start':
+        if str(route) == '/start':
             start(message)
 
         else:
             try:
-                f = open(str(put),'w+',encoding = 'utf-8')
+                f = open(str(route),'w+',encoding = 'utf-8')
                 f.write("")
                 f.close
-                bot.send_message(message.chat.id, f'☑️ Файл *{put}* был успешно очищен!', parse_mode='Markdown')
+                bot.send_message(message.chat.id, f'☑️ Файл *{route}* был успешно очищен!', parse_mode='Markdown')
                 mainmenu(message)
 
             except:
@@ -358,9 +378,8 @@ def dobavka_put(message):
                 start(message)
 
         else:
-            global put 
-
-            put = message.text.strip()
+            global route
+            route = message.text.strip()
             bot.send_message(message.chat.id, '✍️ *Укажите, что нужно добавить!*', parse_mode='Markdown')
             bot.register_next_step_handler(message, dobavka_final)
 
@@ -373,13 +392,13 @@ def dobavka_final(message):
 
         else:
             try:
-                global put
+                global route
                 sod = message.text.strip()
 
-                my_file = open(str(put), "a+")
-                my_file.write(str(sod))
+                my_file = open(str(route), "a+")
+                my_file.write(str(route))
                 my_file.close()
-                bot.send_message(message.chat.id, f'☑️ Файл *{put}* успешно создан/изменен!', parse_mode='Markdown')
+                bot.send_message(message.chat.id, f'☑️ Файл *{route}* успешно создан/изменен!', parse_mode='Markdown')
 
                 files(message)
 
@@ -443,7 +462,7 @@ def delete_filee1(message):
             else:
                 putt = message.text.strip()
                 os.remove(putt)
-                bot.send_message(message.chat.id, f'☑️ Файл по пути *{put}* был успешно удален!', parse_mode = "Markdown")
+                bot.send_message(message.chat.id, f'☑️ Файл по пути *{route}* был успешно удален!', parse_mode = "Markdown")
                 delete_file5545(message)
 
         except:
@@ -529,10 +548,10 @@ def download_file_on_pc(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        global put
-        put = str(message.text.strip())
+        global route
+        route = str(message.text.strip())
 
-        if put == '/start':
+        if route == '/start':
             start(message)
 
         bot.send_message(message.chat.id, '*✍️ Пришлите файл, который необходимо выгрузить (до 20 мб)*', parse_mode="Markdown")
@@ -545,7 +564,7 @@ def download_file_on_pc1(message):
         file_info = bot.get_file(message.document.file_id)
         downloaded_file = bot.download_file(file_info.file_path)
         try:
-            src = put
+            src = route
             with open(src, 'wb') as new_file:
                 new_file.write(downloaded_file)
 
@@ -564,10 +583,10 @@ def download_photo(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        global put
-        put = str(message.text.strip())
+        global route
+        route = str(message.text.strip())
 
-        if put == '/start':
+        if route == '/start':
             start(message)
 
         bot.send_message(message.chat.id, '*✍️ Пришлите файл, который необходимо выгрузить (до 20 мб)*', parse_mode="Markdown")
@@ -580,8 +599,7 @@ def download_photo1(message):
         file_info = bot.get_file(message.photo[len(message.photo) - 1].file_id)
         downloaded_file = bot.download_file(file_info.file_path)
         try:
-            src = put
-            with open(src, 'wb') as new_file:
+            with open(route, 'wb') as new_file:
                 new_file.write(downloaded_file)
 
             bot.send_message(message.chat.id, '*☑️ Успешно сохранено!*', parse_mode="Markdown")
@@ -714,15 +732,15 @@ def download_file(message):
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
         try:
-            put = message.text.strip()
+            route = message.text.strip()
             
-            if put == '/start':
+            if route == '/start':
                 return start(message)
 
-            elif str(put) == 'Назад':
+            elif str(route) == 'Назад':
                 return files(message)
 
-            photo = open(str(put), 'rb')
+            photo = open(str(route), 'rb')
             bot.send_document(message.chat.id, photo)
             files(message)
 
@@ -759,7 +777,7 @@ def open_file(message):
 
 
 
-def error_set(message):
+def create_error(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
@@ -770,9 +788,9 @@ def error_set(message):
             return start(message)
 
         bot.send_message(message.chat.id, '❗️ *Впишите содержимое ошибки!*', parse_mode='Markdown')
-        bot.register_next_step_handler(message, error_set1)
+        bot.register_next_step_handler(message, create_error2)
 
-def error_set1(message):
+def create_error2(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
@@ -797,11 +815,12 @@ def console_menu(message):
         markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
         item0=types.KeyboardButton("Ввод команд")
         item1=types.KeyboardButton("Запустить Python скрипт")
-        item2=types.KeyboardButton("Сделать скриншот")
-        item3=types.KeyboardButton("Открыть сайт")
-        item4=types.KeyboardButton("Создать ошибку")
-        item5=types.KeyboardButton("Информация о ПК")
-        item6=types.KeyboardButton("Назад")
+        item2=types.KeyboardButton("Зайти на SAMP сервер")
+        item3=types.KeyboardButton("Сделать скриншот")
+        item4=types.KeyboardButton("Открыть сайт")
+        item5=types.KeyboardButton("Создать ошибку")
+        item6=types.KeyboardButton("Информация о ПК")
+        item7=types.KeyboardButton("Назад")
         markup.add(item0)
         markup.add(item1)
         markup.add(item2)
@@ -809,6 +828,7 @@ def console_menu(message):
         markup.add(item4)
         markup.add(item5)
         markup.add(item6)
+        markup.add(item7)
         bot.send_message(message.chat.id, '💻 *Вы в меню консоли!*', reply_markup=markup, parse_mode='Markdown')
         bot.register_next_step_handler(message, console_check)
 
@@ -855,12 +875,15 @@ def console_check(message):
 
         elif message.text.strip() == 'Создать ошибку':
             bot.send_message(message.chat.id, '❗️ *Введите заголовок ошибки!*', parse_mode='Markdown')
-            bot.register_next_step_handler(message, error_set)
+            bot.register_next_step_handler(message, create_error)
 
         elif message.text.strip() == 'Запустить Python скрипт':
             bot.send_message(message.chat.id, '❗️ *Введите путь скрипта!*', parse_mode='Markdown')
             bot.register_next_step_handler(message, python_scripts)
 
+        elif message.text.strip() == 'Зайти на SAMP сервер':
+            bot.send_message(message.chat.id, '✍️ *Введите IP сервера, на который вы хотите зайти!\n\nP.s. будет использоваться ник, под которым вы играли в последний раз!*', parse_mode='Markdown')
+            bot.register_next_step_handler(message, samp_connect)
 
         elif message.text.strip() == 'Открыть сайт':
             markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
@@ -868,7 +891,7 @@ def console_check(message):
             markup.add(item0)
 
             bot.send_message(message.chat.id, '✍️ *Введите адрес сайта!*', reply_markup=markup, parse_mode='Markdown')
-            bot.register_next_step_handler(message, open_sait)
+            bot.register_next_step_handler(message, open_site)
 
 
         elif message.text.strip() == 'Назад':
@@ -885,7 +908,7 @@ def console_check(message):
 
 
 
-def open_sait(message):
+def open_site(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
@@ -910,7 +933,7 @@ def open_sait(message):
 
 
 
-def keyboard1(message):
+def keyboard_menu(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
@@ -942,7 +965,7 @@ def keyboard_check(message):
 
         else:
             bot.send_message(message.chat.id, '❌ *Неверный выбор! Повторите попытку*', parse_mode='Markdown')
-            keyboard1(message)
+            keyboard_menu(message)
 
 
 
@@ -981,7 +1004,7 @@ def keyboard_word2(message):
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
         if message.text.strip() == "Назад":
-            keyboard1(message)
+            keyboard_menu(message)
         
         elif message.text.strip() == '/start':
             start(message)
@@ -1059,7 +1082,7 @@ def keyboard_keys2(message):
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
         try:
             if message.text.strip() == "Назад":
-                keyboard1(message)
+                keyboard_menu(message)
 
             elif message.text.strip() == '/start':
                 start(message)
@@ -1111,7 +1134,7 @@ def check(message):
             start(message)
 
         elif message.text.strip() == 'Клавиши':
-            keyboard1(message)
+            keyboard_menu(message)
         
         elif message.text.strip() == 'Троллинг':
             packs(message)
