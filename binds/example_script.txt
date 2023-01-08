@@ -6,5 +6,5 @@ writeKeyboard=Привет, пУпСиК
 useKeyboard=ctrl+s, enter
 useConsole=ping 127.0.0.1
 openSite=https://google.com
-sendScreenshot=1215122907
-sendMessage=1215122907,Здравствуйте, это ассистент Олег
+sendScreenshot=1231312313
+sendMessage=1321231321,Здравствуйте, это ассистент Олег
