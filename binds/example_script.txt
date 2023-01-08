@@ -1,0 +1,10 @@
+// это комментарий
+
+wait=5
+setCursor=55,85
+writeKeyboard=Привет, пУпСиК
+useKeyboard=ctrl+s, enter
+useConsole=ping 127.0.0.1
+openSite=https://google.com
+sendScreenshot=1215122907
+sendMessage=1215122907,Здравствуйте, это ассистент Олег
