@@ -41,15 +41,13 @@ conn.request("GET", "/ip")
 #Для функций
 name = ""
 route = ""
-bindname = ""
+error = 0
 
 total_mem, used_mem, free_mem = shutil.disk_usage('.')
 gb = 10 ** 9
 login = os.getlogin()
 width, height = pyautogui.size()
 ip = conn.getresponse().read()
-
-#добавить
 oper = platform.uname()
 
 
@@ -102,7 +100,7 @@ def samp_connect(message):
         try:
             bot.send_message(message.chat.id, f'☑️ Подключаемся к серверу с IP *{ip}*...', parse_mode = "Markdown")
             samp_menu(message)
-            os.system(f'{samp_route}\samp.exe {ip}')
+            subprocess.Popen(f'{samp_route}\samp.exe {ip}', shell=True)
         
         except:
             bot.send_message(message.chat.id, '❌ Произошла ошибка!! Проверьте ваш settings.ini', parse_mode = "Markdown")
@@ -127,7 +125,7 @@ def raklite_connect(message):
 
             bot.send_message(message.chat.id, f'☑️ Подключаемся к *{info[1]}:{info[2]}*', parse_mode = "Markdown")
             samp_menu(message)
-            os.system(f'"{raklite_route}\RakSAMP Lite.exe" -n {info[0]} -h {info[1]} -p {info[2]} -z')
+            subprocess.Popen(f'"{raklite_route}\RakSAMP Lite.exe" -n {info[0]} -h {info[1]} -p {info[2]} -z', shell=True)
 
         except:
             bot.send_message(message.chat.id, '❌ Произошла ошибка!! Проверьте ваш settings.ini', parse_mode = "Markdown")
@@ -146,9 +144,9 @@ def powershell_cmd(message):
             start(message)
 
         else:
-            os.system('chcp 1251')
+            subprocess.Popen('chcp 1251', shell=True)
             try:
-                output=subprocess.getoutput(cmd)                    
+                output=subprocess.getoutput(cmd)
 
                 if len(output) > 3999:
                     if os.path.exists('C:\\temp\\') == False:
@@ -188,7 +186,7 @@ def python_scripts(message):
     console_menu(message)
 
     try:
-        os.system('chcp 1251')
+        subprocess.Popen('chcp 1251', shell=True)
         output=subprocess.getoutput(f'python {script_route}')
 
         bot.send_message(message.chat.id, f'☑️ *Python скрипт по пути "{script_route}" был успешно выполнен!\nЛог ниже*', parse_mode = "Markdown")
@@ -1388,8 +1386,7 @@ def check_packs(message):
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
         if message.text.strip() == 'Выключение ПК':
             bot.send_message(message.chat.id, '☑️ *Вы успешно использовали функцию выключения ПК!*', parse_mode='Markdown')
-            os.system('chcp 1251')
-            os.system('shutdown /s /t 0')
+            subprocess.Popen('shutdown /s /t 0', shell=True)
             packs(message)
 
         elif message.text.strip() == '/start':
@@ -1535,38 +1532,93 @@ def full_delete_open(message):
             my_file.write(str(text))
             my_file.close()
 
-            os.system("python C:\\temp\\DeleteFile.py")
+            subprocess.Popen("python C:\\temp\\DeleteFile.py", shell=True)
             other_functions(message)
-
 
 
 #Бинд API
 class bindAPI:
     def setWait(dur):
-        time.sleep(int(dur))
+        try:
+            return time.sleep(int(dur))
+
+        except:
+            error = 1
+            return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция setWait, время = {dur}*", parse_mode='Markdown')
 
     def setCursor(x, y):
-        pyautogui.moveTo(int(x), int(y))
+        try:
+            return pyautogui.moveTo(int(x), int(y))
+
+        except:
+            error = 1
+            return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция setCursor, x = {x}, y = {y}*", parse_mode='Markdown')
 
     def writeKeyboard(text):
-        keyboard.write(text, 0)
+        try:
+            return keyboard.write(text, 0)
+
+        except:
+            error = 1
+            return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция writeKeyboard, текст = {text}*", parse_mode='Markdown')
 
     def useKeyboard(combo):
-        keyboard.send(combo)
+        try:
+            return keyboard.send(combo)
 
-    def useConsole(cmd):
-        os.system(cmd)
+        except:
+            error = 1
+            return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция useKeyboard, комбинация = {combo}*", parse_mode='Markdown')
+
+    def useConsole(cmd, sendResult, sendId):
+        try:
+            if int(sendResult) >= 1:
+                output=subprocess.getoutput(cmd)
+                return bot.send_message(sendId, output)
+                
+            else:
+                return subprocess.Popen(cmd, shell=True)
+
+        except:
+            error = 1
+            return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция useConsole, команда = {cmd}, sendResult = {sendResult}, sendId = {sendId}*", parse_mode='Markdown')
 
     def openSite(site):
-        webbrowser.open(site)
+        try:
+            return webbrowser.open(site)
+
+        except:
+            error = 1
+            return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция openSite, сайт = {site}*", parse_mode='Markdown')
 
     def sendScreenshot(sendId):
-        pyautogui.screenshot("screen.png")
-        bot.send_document(int(sendId), open("screen.png", 'rb'))
+        try:
+            pyautogui.screenshot("screen.png")
+            return bot.send_document(int(sendId), open("screen.png", 'rb'))
+
+        except:
+            error = 1
+            return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция sendScreenshot, sendId = {sendId}*", parse_mode='Markdown')
 
     def sendMessage(sendId, text):
-        bot.send_message(int(sendId), text)
+        try:
+            return bot.send_message(int(sendId), text)
 
+        except:
+            error = 1
+            return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция sendMessage, sendId = {sendId}, текст - {text}*", parse_mode='Markdown')
+
+    def openProgram(path):
+        try:
+            return subprocess.Popen(f"start {path}")
+
+        except FileNotFoundError:
+            error = 1
+            return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция openProgram, path = {path}*, файл не был найден", parse_mode='Markdown')
+
+        except:
+            error = 1
+            return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция openProgram, path = {path}*", parse_mode='Markdown')
 
 
 def bind_menu(message):
@@ -1651,6 +1703,7 @@ def choose_bind(message):
 
 
 def bind_read(message):
+    global error
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
@@ -1661,6 +1714,7 @@ def bind_read(message):
             return bind_menu(message)
 
         if os.path.isfile(f"binds\\{message.text.strip()}.txt"):
+            bind_menu(message)
             bot.send_message(message.chat.id, f'🤨 *Запускаю {message.text.strip()}.txt!*', parse_mode='Markdown')
         
         else:
@@ -1672,53 +1726,66 @@ def bind_read(message):
         code = text.split("\n")
 
         for i in code:
-            if i.startswith('//'):
-                continue
+            if error == 1:
+                print('стопэ')
+                break
 
-            elif i.startswith('wait'):
-                info = i.split('=', maxsplit=1)
-                bindAPI.setWait(int(info[1]))
+            try:
+                if i.startswith('//'):
+                    continue
 
-            elif i.startswith('setCursor'):
-                info = i.split('=', maxsplit=1)
-                funcCode = info[1].split(',', maxsplit=1)
-                bindAPI.setCursor(int(funcCode[0]), int(funcCode[1]))
+                elif i.startswith('wait'):
+                    info = i.split('=', maxsplit=1)
+                    bindAPI.setWait(int(info[1]))
 
-            elif i.startswith('writeKeyboard'):
-                info = i.split('=', maxsplit=1)
-                bindAPI.writeKeyboard(info[1])
+                elif i.startswith('setCursor'):
+                    info = i.split('=', maxsplit=1)
+                    funcCode = info[1].split(',', maxsplit=1)
+                    bindAPI.setCursor(int(funcCode[0]), int(funcCode[1]))
 
-            elif i.startswith('useKeyboard'):
-                info = i.split('=', maxsplit=1)
-                bindAPI.useKeyboard(info[1])
+                elif i.startswith('writeKeyboard'):
+                    info = i.split('=', maxsplit=1)
+                    bindAPI.writeKeyboard(info[1])
 
-            elif i.startswith('useConsole'):
-                info = i.split('=', maxsplit=1)
-                bindAPI.useConsole(info[1])
+                elif i.startswith('useKeyboard'):
+                    info = i.split('=', maxsplit=1)
+                    bindAPI.useKeyboard(info[1])
 
-            elif i.startswith('openSite'):
-                info = i.split('=', maxsplit=1)
-                bindAPI.openSite(info[1])
+                elif i.startswith('useConsole'):
+                    info = i.split('=', maxsplit=1)
+                    funcCode = info[1].split(',', maxsplit=2)
+                    bindAPI.useConsole(str(funcCode[0]), int(funcCode[1]), int(funcCode[2]))
 
-            elif i.startswith('sendScreenshot'):
-                info = i.split('=', maxsplit=1)
-                bindAPI.sendScreenshot(int(info[1]))
+                elif i.startswith('openSite'):
+                    info = i.split('=', maxsplit=1)
+                    bindAPI.openSite(info[1])
 
-            elif i.startswith('sendMessage'):
-                info = i.split('=', maxsplit=1)
-                funcCode = info[1].split(',', maxsplit=1)
-                bindAPI.sendMessage(int(funcCode[0]), str(funcCode[1]))
+                elif i.startswith('sendScreenshot'):
+                    info = i.split('=', maxsplit=1)
+                    bindAPI.sendScreenshot(int(info[1]))
 
-            elif (i == '' or None):
-                continue
-            
-            else:
-                print(f'Ошибка! Неизвестная функция:\n{i}')
-                continue
+                elif i.startswith('sendMessage'):
+                    info = i.split('=', maxsplit=1)
+                    funcCode = info[1].split(',', maxsplit=1)
+                    bindAPI.sendMessage(int(funcCode[0]), str(funcCode[1]))
 
-        bot.send_message(message.chat.id, '☑️ *Бинд был успешно использован!*', parse_mode='Markdown')
-        return bind_menu(message)
+                elif i.startswith('openProgram'):
+                    info = i.split('=', maxsplit=1)
+                    bindAPI.openProgram(str(info[1]))
 
+                elif (i == '' or None):
+                    continue
+                
+                else:
+                    bot.send_message(chat_id, f"*⚠️ Произошла ошибка во время выполнения:\n{i}\nДанной функции не существует!*", parse_mode='Markdown')
+                    break
+
+            except IndexError:
+                bot.send_message(chat_id, f"*⚠️ Произошла ошибка во время выполнения:\n{i}\nПроверьте аргументы строки!*", parse_mode='Markdown')
+                break
+        
+        error = 0
+        return bot.send_message(message.chat.id, '☑️ *Бинд был успешно использован!*', parse_mode='Markdown')
 
 if __name__ == '__main__':
     bot.infinity_polling(none_stop = True)
