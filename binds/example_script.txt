@@ -1,10 +1,10 @@
 // это комментарий
-
 wait=5
 setCursor=55,85
 writeKeyboard=Привет, пУпСиК
 useKeyboard=ctrl+s, enter
-useConsole=ping 127.0.0.1
+useConsole=ping 127.0.0.1, 0, 123
 openSite=https://google.com
-sendScreenshot=1231312313
-sendMessage=1321231321,Здравствуйте, это ассистент Олег
+sendScreenshot=1231231234
+sendMessage=1231231234,Здравствуйте, это ассистент Олег
+openProgram=C:\test.jpg
