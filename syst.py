@@ -144,9 +144,8 @@ def powershell_cmd(message):
             start(message)
 
         else:
-            subprocess.Popen('chcp 1251', shell=True)
             try:
-                output=subprocess.getoutput(cmd)
+                output=subprocess.getoutput(cmd, encoding='cp866')
 
                 if len(output) > 3999:
                     if os.path.exists('C:\\temp\\') == False:
@@ -186,8 +185,7 @@ def python_scripts(message):
     console_menu(message)
 
     try:
-        subprocess.Popen('chcp 1251', shell=True)
-        output=subprocess.getoutput(f'python {script_route}')
+        output=subprocess.getoutput(f'python {script_route}', encoding='cp866')
 
         bot.send_message(message.chat.id, f'☑️ *Python скрипт по пути "{script_route}" был успешно выполнен!\nЛог ниже*', parse_mode = "Markdown")
         bot.send_message(message.chat.id, f'*{output}*', parse_mode = "Markdown")
@@ -1573,7 +1571,7 @@ class bindAPI:
     def useConsole(cmd, sendResult, sendId):
         try:
             if int(sendResult) >= 1:
-                output=subprocess.getoutput(cmd)
+                output=subprocess.getoutput(cmd, encoding='cp866')
                 return bot.send_message(sendId, output)
                 
             else:
@@ -1681,7 +1679,7 @@ def bind_delete(message):
         item0=types.KeyboardButton("Назад")
         markup.add(item0)
 
-        bot.send_message(message.chat.id, '😏 *Вы в меню удаление биндов!\nВведите имя уже существующего бинда для его удаления*', reply_markup=markup, parse_mode='Markdown')
+        bot.send_message(message.chat.id, '😏 *Вы в меню удаления биндов!\nВведите имя уже существующего бинда для его удаления*', reply_markup=markup, parse_mode='Markdown')
         bot.register_next_step_handler(message, check_bind_del)
 
 def check_bind_del(message):
@@ -1714,7 +1712,7 @@ def choose_bind(message):
         item0=types.KeyboardButton("Назад")
         markup.add(item0)
 
-        bot.send_message(message.chat.id, '😏 *Вы в меню открытия удаление биндов!\nВведите имя уже существующего бинда для его открытия*', reply_markup=markup, parse_mode='Markdown')
+        bot.send_message(message.chat.id, '😏 *Вы в меню взаимодействия с биндами!\nВведите имя уже существующего бинда для его открытия*', reply_markup=markup, parse_mode='Markdown')
         bot.register_next_step_handler(message, bind_read)
 
 
