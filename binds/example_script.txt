@@ -8,3 +8,4 @@ openSite=https://google.com
 sendScreenshot=1231231234
 sendMessage=1231231234,Здравствуйте, это ассистент Олег
 openProgram=C:\test.jpg
+clickMouse=r
