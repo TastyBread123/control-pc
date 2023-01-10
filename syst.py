@@ -1620,6 +1620,22 @@ class bindAPI:
             error = 1
             return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция openProgram, path = {path}*", parse_mode='Markdown')
 
+    def clickMouse(button):
+        try:
+            if button == 'r':
+                return pyautogui.click(button='right')
+
+            elif button == 'l':
+                return pyautogui.click()
+
+            else:
+                error = 1
+                return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда: неизвестная кнопка! Доступные варианты - r или l\n*Функция clickMouse, button = {button}*", parse_mode='Markdown')
+
+        except:
+            error = 1
+            return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция clickMouse, button = {button}*", parse_mode='Markdown')
+
 
 def bind_menu(message):
     get_chat_id = message.chat.id
@@ -1772,6 +1788,10 @@ def bind_read(message):
                 elif i.startswith('openProgram'):
                     info = i.split('=', maxsplit=1)
                     bindAPI.openProgram(str(info[1]))
+
+                elif i.startswith('clickMouse'):
+                    info = i.split('=', maxsplit=1)
+                    bindAPI.clickMouse(str(info[1]))
 
                 elif (i == '' or None):
                     continue
