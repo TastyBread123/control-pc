@@ -52,6 +52,11 @@ https://www.youtube.com/watch?v=IEyMZcfY-V0
 
 **Решение:** скачать файл settings.ini с гитхаба
 
+**Проблема**: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: chat not found
+
+**Решение**: 1. Проверить свой телеграм ID в файле settings.ini
+2. Написать боту в личку /start, и только потом заново запустить его
+
 
 # ChangeLog
 v1.1
