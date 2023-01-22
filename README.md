@@ -39,10 +39,6 @@
 - **gtasa_route** - путь до вашей папки с GTA San Andreas, запрещены пробелы(иначе работать не будет)
 - **raklite_route** - путь до вашего RakSAMP Lite, если не хотите использовать функцию быстрого использования RakSamp, поставьте 1
 
-Видеогайд по настройке скрипта:
-https://www.youtube.com/watch?v=IEyMZcfY-V0
-
-
 # Частые Проблемы
 **Проблема**: File contains no section...
 
