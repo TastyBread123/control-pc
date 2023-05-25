@@ -12,7 +12,7 @@ from datetime import datetime
 from screen_brightness_control import set_brightness, get_brightness
 
 #Настройки бота
-version = 3.2
+version = '3.2.1'
 config = ConfigParser()
 config.read("settings.ini")
 
@@ -25,6 +25,7 @@ raklite_route = config["SAMP"]["raklite_route"]
 #///////////////////////////////////////////////
 conn = HTTPConnection("ifconfig.me")
 conn.request("GET", "/ip")
+ip = conn.getresponse().read()
 
 #Для функций
 pyautogui.FAILSAFE = False
@@ -34,10 +35,12 @@ total_mem, used_mem, free_mem = shutil.disk_usage('.')
 gb = 10 ** 9
 login = os.getlogin()
 width, height = pyautogui.size()
-ip = conn.getresponse().read()
 oper = uname()
-virtual_memory = psutil.virtual_memory()
-battery = psutil.sensors_battery()[0]
+try: virtual_memory = psutil.virtual_memory()
+except: virtual_memory = 'нет информации'
+
+try: battery = psutil.sensors_battery()[0]
+except: battery = 'нет информации'
 
 
 @bot.message_handler(commands=['start'])
@@ -1337,7 +1340,22 @@ def pc_settings_check(message: types.Message):
         elif message.text.strip() == '/start': return start(message)
         elif message.text.strip() == 'Изменить яркость': return brightness_set(message)
         elif message.text.strip() == 'Информация о ПК':
+            conn = HTTPConnection("ifconfig.me")
+            conn.request("GET", "/ip")
+            ip = conn.getresponse().read()
+
+            total_mem, used_mem, free_mem = shutil.disk_usage('.')
+            gb = 10 ** 9
+            login = os.getlogin()
+            width, height = pyautogui.size()
+            oper = uname()
+            try: virtual_memory = psutil.virtual_memory()
+            except: virtual_memory = 'нет информации'
+
+            try: battery = psutil.sensors_battery()[0]
+            except: battery = 'нет информации'
             active_window = getActiveWindowTitle()
+
             if active_window == None or active_window == '': active_window = 'Рабочий стол'
             bot.send_message(chat_id, f'🧐 Бот был где-то запущен! \n\n⏰ Точное время запуска: *{startup_time}*\n💾 Имя пользователя - *{login}*\n🪑 Операционная система - *{oper[0]} {oper[2]} {oper[3]}*\n🧮 Процессор - *{oper[5]}*\n😻 Оперативная память: *Доступно {int(virtual_memory[0] / 1e+9)} ГБ | Загружено {virtual_memory[2]}%*\n🔋 Батарея заряжена на *{battery}%*\n🖥 Разрешение экрана - *{width}x{height}*\n📀 Память: ' + '*{:6.2f}* ГБ'.format(total_mem/gb) + " всего, осталось *{:6.2f}* ГБ".format(free_mem/gb) + f'\n🔑 IP адрес запустившего - *{str(ip)[2:-1]}*\n*🖼 Активное окно - {active_window}*', parse_mode="Markdown")
             return pc_settings(message)
