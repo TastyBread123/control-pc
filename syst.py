@@ -12,7 +12,7 @@ from datetime import datetime
 from screen_brightness_control import set_brightness, get_brightness
 
 #Настройки бота
-version = '3.2.1'
+version = '3.3'
 config = ConfigParser()
 config.read("settings.ini")
 
@@ -775,10 +775,10 @@ def open_site(message: types.Message):
     get_chat_id = message.chat.id
 
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
-        if message.text.strip() == 'Назад': console_menu(message)
+        if message.text.strip() == 'Назад': return console_menu(message)
         elif message.text.strip() == '/start': return start(message)
 
-        webopen(message.text.strip(), new=1)
+        webopen(message.text.strip(), new=2)
         bot.send_message(message.chat.id, f'☑️ *Вы успешно открыли {message.text.strip()}*', parse_mode='Markdown')
         return console_menu(message)
 
@@ -1067,7 +1067,9 @@ def reboot_check(message: types.Message):
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
         if message.text.strip() == '/start': return start(message)
         elif message.text.strip() == 'Да, подтверждаю':
-            bot.send_message(message.chat.id, '☑️ *Вы успешно вызвали перезагрузку ПК*', parse_mode='Markdown')
+            bot.send_message(message.chat.id, '☑️ *Вы успешно вызвали перезагрузку ПК\nОна произойдет после редиректа в главное меню*', parse_mode='Markdown')
+            mainmenu()
+            bot.send_message(message.chat.id, "☑️ *Перезагрузка запущена!*")
             return subprocess.run('shutdown -r -t 0')
 
         elif message.text.strip() == 'Нет, я передумал':
@@ -1096,7 +1098,9 @@ def off_computer_check(message: types.Message):
     if int(get_chat_id) == int(chat_id) or int(get_chat_id) == int(chat_idd):
         if message.text.strip() == '/start': return start(message)
         elif message.text.strip() == 'Да, подтверждаю':
-            bot.send_message(message.chat.id, '☑️ *Вы успешно вызвали выключение ПК*', parse_mode='Markdown')
+            bot.send_message(message.chat.id, '☑️ *Вы успешно вызвали выключение ПК\nОно произойдет после редиректа в главное меню*', parse_mode='Markdown')
+            mainmenu()
+            bot.send_message(message.chat.id, "☑️ *Выключение запущено!*")
             return subprocess.Popen('shutdown /s /t 0', shell=True)
 
         elif message.text.strip() == 'Нет, я передумал':
@@ -1418,15 +1422,15 @@ class bindAPI:
             error = 1
             return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция useKeyboard, комбинация = {combination}*", parse_mode='Markdown')
 
-    def useConsole(self, cmd, sendResult, sendId):
+    def useConsole(self, sendId, cmd):
         try:
-            if int(sendResult) >= 1:
+            if int(sendId) >= 1:
                 output=subprocess.getoutput(cmd, encoding='cp866')
                 return bot.send_message(sendId, output)
             else: return subprocess.Popen(cmd, shell=True)
         except:
             error = 1
-            return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция useConsole, команда = {cmd}, sendResult = {sendResult}, sendId = {sendId}*", parse_mode='Markdown')
+            return bot.send_message(chat_id, f"⚠️ Произошла ошибка при выполнении бинда! *Функция useConsole, команда = {cmd}, sendId = {sendId}*", parse_mode='Markdown')
 
     def openSite(self, site):
         try: return webopen(site)
@@ -1545,13 +1549,12 @@ def bind_read(message: types.Message):
         if message.text.strip == "/start": return start(message)
         elif message.text.strip == "Назад": return bind_menu(message)
 
-        if os.path.isfile(f"binds\\{message.text.strip()}.txt"):
-            bind_menu(message)
-            bot.send_message(message.chat.id, f'🤨 *Запускаю {message.text.strip()}.txt!*', parse_mode='Markdown')
-        
-        else:
+        if os.path.isfile(f"binds\\{message.text.strip()}.txt") == False:
             bot.send_message(message.chat.id, '😮 *Данного бинда не существует!*', parse_mode='Markdown')
             return bind_menu(message)
+        
+        bind_menu(message)
+        bot.send_message(message.chat.id, f'🤨 *Запускаю {message.text.strip()}.txt!*', parse_mode='Markdown')    
 
         file = open(f"binds\\{message.text.strip()}.txt", "r", encoding='utf8')
         text = file.read()
@@ -1565,46 +1568,46 @@ def bind_read(message: types.Message):
 
                 elif i.startswith('wait'):
                     info = i.split('=', maxsplit=1)
-                    bindAPI.setWait(int(info[1]))
+                    bindAPI.setWait(bindAPI(), int(info[1]))
 
                 elif i.startswith('setCursor'):
                     info = i.split('=', maxsplit=1)
                     funcCode = info[1].split(',', maxsplit=1)
-                    bindAPI.setCursor(int(funcCode[0]), int(funcCode[1]))
+                    bindAPI.setCursor(bindAPI(), int(funcCode[0]), int(funcCode[1]))
 
                 elif i.startswith('writeKeyboard'):
                     info = i.split('=', maxsplit=1)
-                    bindAPI.writeKeyboard(info[1])
+                    bindAPI.writeKeyboard(bindAPI(), info[1])
 
                 elif i.startswith('useKeyboard'):
                     info = i.split('=', maxsplit=1)
-                    bindAPI.useKeyboard(info[1])
+                    bindAPI.useKeyboard(bindAPI(), info[1])
 
                 elif i.startswith('useConsole'):
                     info = i.split('=', maxsplit=1)
-                    funcCode = info[1].split(',', maxsplit=2)
-                    bindAPI.useConsole(str(funcCode[0]), int(funcCode[1]), int(funcCode[2]))
+                    funcCode = info[1].split(',', maxsplit=1)
+                    bindAPI.useConsole(bindAPI(), int(funcCode[0]), funcCode[1])
 
                 elif i.startswith('openSite'):
                     info = i.split('=', maxsplit=1)
-                    bindAPI.openSite(info[1])
+                    bindAPI.openSite(bindAPI(), info[1])
 
                 elif i.startswith('sendScreenshot'):
                     info = i.split('=', maxsplit=1)
-                    bindAPI.sendScreenshot(int(info[1]))
+                    bindAPI.sendScreenshot(bindAPI(), int(info[1]))
 
                 elif i.startswith('sendMessage'):
                     info = i.split('=', maxsplit=1)
                     funcCode = info[1].split(',', maxsplit=1)
-                    bindAPI.sendMessage(int(funcCode[0]), str(funcCode[1]))
+                    bindAPI.sendMessage(bindAPI(), int(funcCode[0]), str(funcCode[1]))
 
                 elif i.startswith('openProgram'):
                     info = i.split('=', maxsplit=1)
-                    bindAPI.openProgram(str(info[1]))
+                    bindAPI.openProgram(bindAPI(), str(info[1]))
 
                 elif i.startswith('clickMouse'):
                     info = i.split('=', maxsplit=1)
-                    bindAPI.clickMouse(str(info[1]))
+                    bindAPI.clickMouse(bindAPI(), str(info[1]))
 
                 elif (i == '' or None): continue
                 
