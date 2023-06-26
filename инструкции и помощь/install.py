@@ -1,12 +1,10 @@
-import os
+from os import system
 
-os.system('pip install pyTelegramBotAPI')
-os.system('pip install pyinstaller')
-os.system('pip install pyautogui')
-os.system('pip install shutil')
-os.system('pip install keyboard')
-os.system('pip install ctypes')
-os.system('pip install subprocess')
-os.system('pip install pillow')
-os.system('pip install screen_brightness_control')
-os.system('pip install psutil')
+system('pip install pyTelegramBotAPI')
+system('pip install pyinstaller')
+system('pip install pyautogui')
+system('pip install keyboard')
+system('pip install subprocess')
+system('pip install pillow')
+system('pip install screen_brightness_control')
+system('pip install psutil')
