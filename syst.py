@@ -19,8 +19,8 @@ FAST_CMDS = ['tasklist', 'ping']  # быстрые команды (исполь�
 TROLL_WEBSITES = ['https://dzen.ru', 'https://youtube.com', 'https://www.google.com', 'https://yandex.ru', 'https://vk.com']  # сайты для открытия в троллинге (используются при троллинге массовым открытием сайтов)
 
 VERSION = '3.4'
-TOKEN = "5437469847:AAFTPFZtEOmrYOSDW-GWovdvJyjskdIkyAY"
-chat_id = 1215122907
+TOKEN = ""
+chat_id = 0
 chat_idd = 0
 
 SAMP_ROUTE = ""  # Оставьте пустым, если не хотите использовать функции запуска SAMP
