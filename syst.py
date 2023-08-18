@@ -18,9 +18,9 @@ FAST_KEYS = ["enter", "backspace", "space", "tab", "ctrl+a", "ctrl+z", "ctrl+c",
 FAST_CMDS = ['tasklist', 'ping']  # Быстрые команды (используются при вводе команд)
 TROLL_WEBSITES = ['https://dzen.ru', 'https://youtube.com', 'https://www.google.com', 'https://yandex.ru', 'https://vk.com']  # Сайты для открытия в троллинге (используются при троллинге массовым открытием сайтов)
 
-VERSION = '3.5'  # Версия бота
-TOKEN = "token"  # Токен бота
-FIRST_ID = 111111111  # ID главного админа (обязтаельно к заполнению)
+VERSION = '3.5.1'  # Версия бота
+TOKEN = ""  # Токен бота
+FIRST_ID = 123569658  # ID главного админа (обязтаельно к заполнению)
 SECOND_ID = 0  # ID второго админа (необязательно к заполнению). Оставьте 0, если в нем нет необходимости
 
 SAMP_ROUTE = ""  # Оставьте пустым, если не хотите использовать функции запуска SAMP
@@ -432,12 +432,12 @@ def files_menu_check(message: types.Message):
 
     elif message.text.strip() == 'Запустить файл/программу':
         markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Назад")
-        bot.send_message(message.chat.id, '*✍️ Введите название и расширение файла(Пример: test.txt), если файл не из этой папки, введите полный путь!*', reply_markup=markup, parse_mode="Markdown")
+        bot.send_message(message.chat.id, '*✍️ Введите название и расширение файла (Пример: test.txt), если файл не из этой папки, введите полный путь!*', reply_markup=markup, parse_mode="Markdown")
         return bot.register_next_step_handler(message, open_file)
 
     elif message.text.strip() == 'Скачать файл с ПК':
         markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Назад")
-        bot.send_message(message.chat.id, '*✍️ Введите название и расширение файла(Пример: test.txt), если файл не из этой папки, введите полный путь (до 50 мб)*', reply_markup=markup, parse_mode="Markdown")
+        bot.send_message(message.chat.id, '*✍️ Введите название и расширение файла (Пример: test.txt), если файл не из этой папки, введите полный путь (до 50 мб)*', reply_markup=markup, parse_mode="Markdown")
         return bot.register_next_step_handler(message, download_file)
 
     bot.send_message(message.chat.id, '❌ *Неверный выбор!\nПовторите попытку*', parse_mode='Markdown')
@@ -1058,7 +1058,7 @@ class bindAPI:
         except: return bot.send_message(FIRST_ID, f"⚠️ Произошла ошибка при выполнении бинда! *Функция sendMessage, sendId = {sendId}, текст - {text}*", parse_mode='Markdown')
 
     def openProgram(self, path):
-        try: subprocess.Popen(f"start {path}")
+        try: subprocess.Popen(f'"{path}"')
         except FileNotFoundError: return bot.send_message(FIRST_ID, f"⚠️ Произошла ошибка при выполнении бинда! *Функция openProgram, path = {path}*, файл не был найден", parse_mode='Markdown')
     
 
