@@ -1,3 +1,0 @@
-В cmd после установки библиотеки pyinstaller:
-
-pyinstaller syst.py --noconsole --onefile
